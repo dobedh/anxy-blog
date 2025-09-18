@@ -16,6 +16,8 @@ export interface Post {
   comments: number;
   isAnonymous?: boolean;   // 익명 글 여부
   isPrivate?: boolean;     // 비공개 글 여부
+  thumbnail?: string;      // 썸네일 이미지 URL
+  thumbnailAlt?: string;   // 썸네일 이미지 설명 (접근성)
 }
 
 // 새 글 생성용 인터페이스

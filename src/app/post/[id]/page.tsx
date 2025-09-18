@@ -5,6 +5,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Post } from '@/types/post';
 import { getPostById } from '@/utils/postUtils';
+import { Comment } from '@/types/comment';
+import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PostPageProps {
   params: { id: string };
@@ -13,24 +16,32 @@ interface PostPageProps {
 export default function PostPage({ params }: PostPageProps) {
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [commentInput, setCommentInput] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const { currentUser, isAuthenticated } = useAuth();
 
   const postId = params.id;
 
   useEffect(() => {
     const loadPost = () => {
       setIsLoading(true);
-      
+
       console.log('Loading post with ID:', postId);
-      
+
       // Get post data
       const postData = getPostById(postId);
-      
+
       if (!postData) {
         console.log('Post not found:', postId);
         notFound();
         return;
       }
-      
+
       console.log('Post found:', postData);
       setPost(postData);
       setIsLoading(false);
@@ -38,6 +49,64 @@ export default function PostPage({ params }: PostPageProps) {
 
     loadPost();
   }, [postId]);
+
+  useEffect(() => {
+    if (postId) {
+      const loadComments = () => {
+        const postComments = getCommentsByPostId(postId);
+        const count = getCommentCount(postId);
+        setComments(postComments);
+        setCommentCount(count);
+      };
+
+      loadComments();
+    }
+  }, [postId]);
+
+  const handleFollowClick = () => {
+    setIsFollowing(!isFollowing);
+    // TODO: Implement actual follow/unfollow logic
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated || !currentUser) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    if (!commentInput.trim()) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+
+    setIsSubmittingComment(true);
+
+    try {
+      const result = createComment(
+        { content: commentInput, postId },
+        currentUser.id,
+        currentUser.displayName
+      );
+
+      if (result.success) {
+        setCommentInput('');
+        // Reload comments
+        const postComments = getCommentsByPostId(postId);
+        const count = getCommentCount(postId);
+        setComments(postComments);
+        setCommentCount(count);
+      } else {
+        alert(result.error || '댓글 작성 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('Comment submission error:', error);
+      alert('댓글 작성 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -55,39 +124,33 @@ export default function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <div className="content-container space-2xl pt-24">
-      {/* Header */}
-      <div className="mb-12">
-        {/* Back button */}
-        <Link 
-          href="/"
-          className="inline-flex items-center gap-2 text-muted hover:text-foreground transition-gentle mb-8 focus-ring rounded-lg px-2 py-1"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          돌아가기
-        </Link>
-
-        {/* Post meta */}
-        <div className="flex items-center gap-3 mb-6 text-caption text-secondary">
-          <span className="font-semibold px-3 py-1.5 bg-accent rounded-full text-primary text-xs uppercase tracking-wider">
-            {post.category}
-          </span>
-          <span className="text-border">·</span>
-          <time className="font-medium">{post.date}</time>
-          <span className="text-border">·</span>
-          <span className="font-medium">by {post.author}</span>
-        </div>
-
-        {/* Title */}
+    <div className="content-container space-2xl pt-64">
+      {/* 1. Title */}
+      <div className="mb-8 mt-32">
         <h1 className="text-hero font-bold text-foreground leading-tight">
           {post.title}
         </h1>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl">
+      {/* 2. Author info with follow button and date */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <span className="text-lg font-medium text-gray-900">{post.author}</span>
+          <button
+            onClick={handleFollowClick}
+            className="px-4 py-1.5 text-sm font-medium rounded-full border border-gray-300 text-gray-700 transition-colors hover:border-gray-400"
+          >
+            {isFollowing ? 'Following' : 'Follow'}
+          </button>
+        </div>
+        <span className="text-sm text-gray-500">{post.date}</span>
+      </div>
+
+      {/* 3. Separator line */}
+      <div className="border-t border-gray-200 mb-6"></div>
+
+      {/* 4. Main content */}
+      <div className="max-w-4xl mb-12">
         <div className="prose prose-lg max-w-none">
           <div className="text-body text-foreground leading-relaxed whitespace-pre-wrap">
             {post.content}
@@ -95,22 +158,113 @@ export default function PostPage({ params }: PostPageProps) {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-6 mt-12 pt-8 border-t border-border text-caption text-secondary">
-        <button className="flex items-center gap-2 hover:text-primary transition-gentle focus-ring rounded-lg p-2 font-medium">
-          <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      {/* 5. Like and comment actions - redesigned */}
+      <div className="flex items-center gap-4 mb-8">
+        {/* Like button */}
+        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-          <span>좋아요 {post.likes}</span>
+          <span>{post.likes}</span>
         </button>
-        
-        <button className="flex items-center gap-2 hover:text-primary transition-gentle focus-ring rounded-lg p-2 font-medium">
-          <svg className="w-5 h-5" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+
+        {/* Comment button */}
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          <span>댓글 {post.comments}</span>
+          <span>댓글 {commentCount}</span>
         </button>
       </div>
+
+      {/* 6. Comments section - conditional */}
+      {showComments && (
+        <div className="border-t border-gray-200 pt-8 mb-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-6">댓글 {commentCount}</h3>
+
+          {/* Comment input */}
+          {isAuthenticated ? (
+            <form onSubmit={handleCommentSubmit} className="mb-6">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-semibold text-gray-700">
+                    {currentUser?.displayName.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={commentInput}
+                    onChange={(e) => setCommentInput(e.target.value)}
+                    placeholder="댓글을 입력하세요..."
+                    disabled={isSubmittingComment}
+                    className="w-full px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-gray-300 placeholder-gray-500 disabled:opacity-50"
+                  />
+                  {commentInput.trim() && (
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isSubmittingComment}
+                        className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmittingComment ? '댓글 작성 중...' : '댓글 작성'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </form>
+          ) : (
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg text-center">
+              <p className="text-sm text-gray-600 mb-2">댓글을 작성하려면 로그인이 필요합니다.</p>
+              <Link
+                href="/login"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                로그인하기
+              </Link>
+            </div>
+          )}
+
+          {/* Comments list */}
+          {comments.length > 0 ? (
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <div key={comment.id} className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-semibold text-white">
+                      {comment.authorName.charAt(0)}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-medium text-gray-900 text-sm">{comment.authorName}</span>
+                      {comment.authorId === post?.authorId && (
+                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">작가</span>
+                      )}
+                      <span className="text-xs text-gray-500">{formatCommentDate(comment.createdAt)}</span>
+                    </div>
+                    <p className="text-gray-700 text-sm mb-2">
+                      {comment.content}
+                    </p>
+                    {comment.isEdited && (
+                      <span className="text-xs text-gray-500">수정됨</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">아직 댓글이 없습니다.</p>
+              <p className="text-gray-400 text-xs mt-1">첫 번째 댓글을 작성해보세요!</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

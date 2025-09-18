@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { followUser, unfollowUser, isFollowing } from '@/utils/followUtils';
 
@@ -18,6 +19,7 @@ export default function FollowButton({
   const { currentUser, isAuthenticated } = useAuth();
   const [isFollowingUser, setIsFollowingUser] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   // 팔로우 상태 확인
   useEffect(() => {
@@ -27,9 +29,23 @@ export default function FollowButton({
     }
   }, [currentUser, targetUserId]);
 
-  // 로그인하지 않았거나 본인인 경우 버튼 숨김
-  if (!isAuthenticated || !currentUser || currentUser.id === targetUserId) {
+  // 로그인하지 않았거나 현재 사용자가 없는 경우 버튼 숨김
+  if (!isAuthenticated || !currentUser) {
     return null;
+  }
+
+  // 본인 프로필인 경우 프로필 수정 버튼 표시
+  if (currentUser.id === targetUserId) {
+    return (
+      <button
+        onClick={() => {
+          router.push(`/u/${targetUsername}/edit`);
+        }}
+        className="px-6 py-2 rounded-full font-medium bg-surface text-foreground border border-border hover:bg-subtle transition-gentle focus-ring"
+      >
+        프로필 수정
+      </button>
+    );
   }
 
   const handleFollowToggle = async () => {

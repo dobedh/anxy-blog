@@ -1,115 +1,326 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Header() {
   const { currentUser, isAuthenticated, logout } = useAuth();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
+  // Close dropdown on ESC key
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('keydown', handleEsc);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, [isMenuOpen]);
+
+  // Prevent body scroll when sidebar is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link 
-            href="/" 
-            className="text-2xl font-bold text-gray-900 hover:text-gray-700 transition-colors"
+      <div className="h-16 flex items-center justify-between">
+        {/* Left Side - Hamburger, Logo, and Search */}
+        <div className="flex items-center flex-1">
+          {/* Hamburger Menu Button - Flush to left edge */}
+          <div ref={dropdownRef} className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="h-16 px-6 hover:bg-gray-100 transition-colors flex items-center justify-center"
+              aria-label="Menu"
+            >
+              <svg
+                className="w-6 h-6 text-gray-700"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+
+            {/* Mobile Sidebar Overlay */}
+            {isMenuOpen && (
+              <div className={`fixed left-0 top-0 h-full w-80 bg-white transform transition-all duration-400 ease-out shadow-2xl z-50 ${
+                isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+              }`}>
+                {isAuthenticated ? (
+                  <>
+                    {/* Top Section - Profile + Write Button */}
+                    <div className="p-6 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        {/* Profile Image */}
+                        <Link
+                          href={`/u/${currentUser?.username}`}
+                          className="flex items-center space-x-3 flex-1"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <div className="w-12 h-12 bg-brunch-light-green rounded-full flex items-center justify-center">
+                            <span className="text-lg font-semibold text-brunch-green">
+                              {currentUser?.displayName.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-base font-medium text-gray-900">
+                              {currentUser?.displayName}
+                            </p>
+                          </div>
+                        </Link>
+
+                        {/* Write Button */}
+                        <Link
+                          href="/write"
+                          className="ml-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          글쓰기
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="py-4">
+                      <nav className="space-y-1">
+                        <Link
+                          href="/"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                          </svg>
+                          홈
+                        </Link>
+                        <Link
+                          href={`/u/${currentUser?.username}`}
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          내 블로그
+                        </Link>
+                        <Link
+                          href="/library"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                          </svg>
+                          라이브러리
+                        </Link>
+                      </nav>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Guest Header */}
+                    <div className="p-6 border-b border-gray-200">
+                      <Link
+                        href="/"
+                        className="text-xl font-medium text-gray-900"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Anxy
+                      </Link>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="py-4">
+                      <nav className="space-y-1">
+                        <Link
+                          href="/"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                          </svg>
+                          홈
+                        </Link>
+                        <Link
+                          href="/library"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                          </svg>
+                          라이브러리
+                        </Link>
+
+                        {/* Authentication Section */}
+                        <div className="border-t border-gray-200 my-4"></div>
+                        <Link
+                          href="/login"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                          </svg>
+                          로그인
+                        </Link>
+                        <Link
+                          href="/signup"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                          </svg>
+                          회원가입
+                        </Link>
+                      </nav>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Logo - Right next to hamburger */}
+          <Link
+            href="/"
+            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors"
           >
             Anxy
           </Link>
 
-          {/* Search Bar - Center (hidden on mobile) */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+          {/* Search Bar - Left positioned */}
+          <div className="flex-1 max-w-48 ml-6">
+            <div className="relative">
               <input
                 type="text"
                 placeholder="Search"
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-gray-900 focus:border-gray-900 text-sm"
+                className="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-100/30 rounded-full focus:outline-none focus:bg-gray-100/50 placeholder-gray-500"
               />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
             </div>
           </div>
+        </div>
 
-          {/* Right Side */}
+        {/* Right Side - Write, Notifications, Profile */}
+        <div className="flex items-center gap-2 pr-6">
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
+            <>
               {/* Write Button */}
               <Link
                 href="/write"
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
                 </svg>
-                Write
+                <span>Write</span>
               </Link>
 
-              {/* Notifications */}
-              <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.97 4.97a.75.75 0 0 0-1.08 1.05l-3.99 4.99a.75.75 0 0 0 1.08 1.05l4.01-4.99a.75.75 0 0 0-1.1-1.1z" />
+              {/* Notification Bell */}
+              <button
+                className="p-2 text-gray-600 hover:text-gray-900 transition-colors relative"
+                aria-label="Notifications"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
                 </svg>
+                {/* Optional notification dot */}
+                {/* <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span> */}
               </button>
 
-              {/* Profile Menu */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-medium text-gray-700">
-                      {currentUser?.displayName.charAt(0)}
-                    </span>
-                  </div>
-                </button>
-
-                {showProfileMenu && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="py-1">
-                      <Link
-                        href={`/u/${currentUser?.username}`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setShowProfileMenu(false)}
-                      >
-                        Profile
-                      </Link>
-                      <button
-                        onClick={() => {
-                          logout();
-                          setShowProfileMenu(false);
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Sign out
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+              {/* Profile Image */}
+              <Link href={`/u/${currentUser?.username}`}>
+                <div className="w-8 h-8 bg-gray-300 rounded-full focus:outline-none hover:bg-gray-400 transition-colors cursor-pointer flex items-center justify-center">
+                  <span className="text-sm font-semibold text-gray-700">
+                    {currentUser?.displayName.charAt(0)}
+                  </span>
+                </div>
+              </Link>
+            </>
           ) : (
-            <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/signup"
-                className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
-              >
-                Get started
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              로그인
+            </Link>
           )}
         </div>
       </div>

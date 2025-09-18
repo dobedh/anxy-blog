@@ -74,24 +74,21 @@ export default function UserPage({ params }: UserPageProps) {
   }
 
   return (
-    <div className="content-container space-2xl pt-24">
+    <div className="content-container" style={{paddingTop: '80px'}}>
       {/* User Profile Section */}
       <div className="text-center mb-16">
-        <h1 className="text-hero font-bold text-foreground mb-2">
+        <h1 className="text-hero font-bold text-foreground mb-4">
           {user.displayName}
         </h1>
-        <p className="text-title text-muted mb-4">
-          @{user.username}
-        </p>
         {user.bio && (
           <p className="text-body text-foreground max-w-md mx-auto leading-relaxed">
             {user.bio}
           </p>
         )}
-        
+
         {/* Follow Button */}
         <div className="mt-6">
-          <FollowButton 
+          <FollowButton
             targetUserId={user.id}
             targetUsername={user.username}
             onFollowChange={(isFollowing) => {
@@ -101,7 +98,7 @@ export default function UserPage({ params }: UserPageProps) {
             }}
           />
         </div>
-        
+
         {/* Basic stats */}
         <div className="flex items-center justify-center gap-8 mt-8 text-body text-muted">
           <div className="text-center">

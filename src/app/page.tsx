@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import PostCard from '@/components/PostCard';
+import BrunchPostCard from '@/components/BrunchPostCard';
 import { getPosts } from '@/utils/postUtils';
 import { Post } from '@/types/post';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +21,8 @@ const mockPosts: Post[] = [
     comments: 8,
     isAnonymous: true,
     isPrivate: false,
+    thumbnail: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300&h=200&fit=crop',
+    thumbnailAlt: '음악 스튜디오의 마이크와 헤드폰',
   },
   {
     id: 'mock_2',
@@ -35,6 +37,8 @@ const mockPosts: Post[] = [
     comments: 12,
     isAnonymous: false,
     isPrivate: false,
+    thumbnail: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=200&fit=crop',
+    thumbnailAlt: '따뜻한 햇살이 비추는 창가',
   },
   {
     id: 'mock_3',
@@ -49,6 +53,8 @@ const mockPosts: Post[] = [
     comments: 6,
     isAnonymous: false,
     isPrivate: false,
+    thumbnail: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=300&h=200&fit=crop',
+    thumbnailAlt: '책이 펼쳐져 있는 도서관 책상',
   },
   {
     id: 'mock_4',
@@ -63,6 +69,8 @@ const mockPosts: Post[] = [
     comments: 15,
     isAnonymous: true,
     isPrivate: false,
+    thumbnail: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=300&h=200&fit=crop',
+    thumbnailAlt: '창밖을 바라보는 실루엣',
   },
   {
     id: 'mock_5',
@@ -77,6 +85,8 @@ const mockPosts: Post[] = [
     comments: 9,
     isAnonymous: false,
     isPrivate: false,
+    thumbnail: 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=300&h=200&fit=crop',
+    thumbnailAlt: '숲속 산책로',
   },
   {
     id: 'mock_6',
@@ -91,29 +101,30 @@ const mockPosts: Post[] = [
     comments: 23,
     isAnonymous: false,
     isPrivate: false,
+    thumbnail: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=300&h=200&fit=crop',
+    thumbnailAlt: '음악을 듣는 사람의 실루엣',
   }
 ];
 
 export default function Home() {
   const [allPosts, setAllPosts] = useState<Post[]>([]);
-  const [activeTab, setActiveTab] = useState<'for-you' | 'featured'>('for-you');
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
 
   const loadPosts = () => {
     // postUtils의 통합 함수 사용 (localStorage에서 사용자 작성글 로드)
     const userPosts = getPosts({}, 'newest');
-    
+
     // 사용자 글과 기본 글을 합쳐서 최신순으로 정렬
     const combinedPosts = [...userPosts, ...mockPosts];
-    
+
     // 최신순으로 정렬 (createdAt 기준)
     combinedPosts.sort((a, b) => {
       const aDate = new Date(a.createdAt || a.date).getTime();
       const bDate = new Date(b.createdAt || b.date).getTime();
       return bDate - aDate;
     });
-    
+
     setAllPosts(combinedPosts);
   };
 
@@ -121,52 +132,23 @@ export default function Home() {
     loadPosts();
   }, [pathname]); // pathname이 변경될 때마다 새로 로드
 
-  // Filter posts based on active tab
-  const displayedPosts = activeTab === 'for-you' 
-    ? allPosts // For now, show all posts in "For you". Later: filter by following
-    : allPosts.filter(post => !post.isPrivate); // Featured: show public posts only
-
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-8">
-        <nav className="flex space-x-8">
-          <button
-            onClick={() => setActiveTab('for-you')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'for-you'
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            For you
-          </button>
-          <button
-            onClick={() => setActiveTab('featured')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'featured'
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Featured
-          </button>
-        </nav>
-      </div>
-
+    <div className="max-w-4xl mx-auto px-6 py-8">
       {/* Posts Section */}
-      <div className="space-y-6">
-        {displayedPosts.map((post) => (
-          <PostCard key={post.id} post={post} />
+      <div className="space-y-0">
+        {allPosts.map((post) => (
+          <BrunchPostCard key={post.id} post={post} />
         ))}
       </div>
 
       {/* Load More */}
-      <div className="text-center mt-12">
-        <button className="text-green-600 font-medium hover:text-green-700 transition-colors">
-          더 많은 글 보기
-        </button>
-      </div>
+      {allPosts.length > 0 && (
+        <div className="text-center mt-12">
+          <button className="text-gray-400 text-sm hover:text-gray-600 transition-colors">
+            더 보기
+          </button>
+        </div>
+      )}
     </div>
   );
 }
