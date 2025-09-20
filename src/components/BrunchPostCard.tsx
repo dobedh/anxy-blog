@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Post } from '@/types/post';
 import { useState, useEffect } from 'react';
+import { togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface BrunchPostCardProps {
   post: Post;
@@ -9,42 +11,45 @@ interface BrunchPostCardProps {
 export default function BrunchPostCard({ post }: BrunchPostCardProps) {
   const { id, title, excerpt, author, date } = post;
   const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { currentUser, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Check if this post is liked
-    const savedLikedPosts = localStorage.getItem('anxy_liked_posts');
-    if (savedLikedPosts) {
-      try {
-        const likedPostIds = JSON.parse(savedLikedPosts) as string[];
-        setIsLiked(likedPostIds.includes(id));
-      } catch (error) {
-        console.error('Error loading liked status:', error);
+    const checkLikedStatus = async () => {
+      if (isAuthenticated && currentUser) {
+        try {
+          const liked = await checkUserLikedPost(id, currentUser.id);
+          setIsLiked(liked);
+        } catch (error) {
+          console.error('Error checking liked status:', error);
+        }
       }
+    };
+
+    checkLikedStatus();
+  }, [id, isAuthenticated, currentUser]);
+
+  const handleLike = async () => {
+    if (!isAuthenticated || !currentUser) {
+      // TODO: Show login prompt or redirect to login
+      return;
     }
-  }, [id]);
 
-  const handleLike = () => {
-    const savedLikedPosts = localStorage.getItem('anxy_liked_posts');
-    let likedPostIds: string[] = [];
+    if (isLoading) return;
 
-    if (savedLikedPosts) {
-      try {
-        likedPostIds = JSON.parse(savedLikedPosts) as string[];
-      } catch (error) {
-        console.error('Error parsing liked posts:', error);
+    setIsLoading(true);
+    try {
+      const result = await togglePostLike(id, currentUser.id);
+      if (result.success) {
+        setIsLiked(result.liked);
+      } else {
+        console.error('Error toggling like:', result.error);
       }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    if (isLiked) {
-      // Remove from liked posts
-      likedPostIds = likedPostIds.filter(postId => postId !== id);
-    } else {
-      // Add to liked posts
-      likedPostIds.push(id);
-    }
-
-    localStorage.setItem('anxy_liked_posts', JSON.stringify(likedPostIds));
-    setIsLiked(!isLiked);
   };
 
   return (
@@ -73,7 +78,8 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
             {/* Like button */}
             <button
               onClick={handleLike}
-              className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+              disabled={isLoading || !isAuthenticated}
+              className="p-2 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={isLiked ? "Unlike" : "Like"}
             >
               <svg

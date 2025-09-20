@@ -20,82 +20,9 @@ interface MigrationResult {
   errors: string[];
 }
 
-// 기본 목업 사용자들 생성
-const MOCK_USERS = [
-  {
-    username: 'mindful_writer',
-    displayName: '마음챙김',
-    bio: '불안한 마음을 글로 다스려가는 중입니다',
-  },
-  {
-    username: 'warm_heart',
-    displayName: '따뜻한마음',
-    bio: '서로에게 힘이 되는 말을 나누고 싶어요',
-  },
-  {
-    username: 'book_lover',
-    displayName: '책벌레',
-    bio: '책을 통해 위로받고 나누고 싶습니다',
-  },
-  {
-    username: 'walking_person',
-    displayName: '걷는사람',
-    bio: '산책하며 찾은 작은 행복을 기록합니다',
-  },
-  {
-    username: 'music_friend',
-    displayName: '음악친구',
-    bio: '음악으로 마음을 달래고 공유하는 것을 좋아해요',
-  },
-];
+// Mock users removed - using real Supabase users only
 
-// 목업 사용자 생성
-function createMockUsers(): { success: boolean; usersCreated: number; errors: string[] } {
-  const results = {
-    success: true,
-    usersCreated: 0,
-    errors: [] as string[],
-  };
-
-  try {
-    // 기존 사용자들 확인
-    const existingUsers = JSON.parse(localStorage.getItem('anxy_users') || '{}');
-    
-    for (const mockUser of MOCK_USERS) {
-      // 이미 존재하는 사용자명인지 체크
-      const userExists = Object.values(existingUsers).some((user: any) => 
-        user.username === mockUser.username
-      );
-      
-      if (!userExists) {
-        const result = createUser({
-          username: mockUser.username,
-          displayName: mockUser.displayName,
-          bio: mockUser.bio,
-          isPrivate: false,
-          allowFollow: true,
-        });
-        
-        if (result.success) {
-          results.usersCreated++;
-          
-          // 목업 사용자용 간단한 패스워드 설정
-          const userId = result.user!.id;
-          const simplePassword = `password${results.usersCreated}`;
-          const passwordHash = simpleHash(simplePassword);
-          localStorage.setItem(`anxy_user_sessions_${userId}_password`, passwordHash);
-        } else {
-          results.errors.push(`Failed to create user ${mockUser.username}: ${result.error}`);
-        }
-      }
-    }
-  } catch (error) {
-    results.success = false;
-    results.errors.push(`Error creating mock users: ${error}`);
-  }
-
-  return results;
-}
+// Mock user creation removed - using real Supabase authentication only
 
 // 간단한 해시 함수 (userUtils와 동일)
 function simpleHash(str: string): string {
