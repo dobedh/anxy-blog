@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { User } from '@/types/user';
 import { Post } from '@/types/post';
-import { getUserByUsername } from '@/utils/userUtils';
-import { getPostsByAuthor } from '@/utils/postUtils';
-import { getFollowerCount, getFollowingCount } from '@/utils/followUtils';
+import { getUserByUsername } from '@/utils/supabaseUserUtils';
+import { getPostsByAuthor } from '@/utils/supabasePostUtils';
+import { getFollowerCount, getFollowingCount } from '@/utils/supabaseFollowUtils';
 import PostCard from '@/components/PostCard';
 import FollowButton from '@/components/FollowButton';
 
@@ -24,34 +24,34 @@ export default function UserPage({ params }: UserPageProps) {
   const username = params.username;
 
   useEffect(() => {
-    const loadUserData = () => {
+    const loadUserData = async () => {
       setIsLoading(true);
-      
+
       console.log('Loading user data for username:', username);
-      
+
       // Get user data
-      const userData = getUserByUsername(username);
-      
+      const userData = await getUserByUsername(username);
+
       if (!userData) {
         console.log('User not found:', username);
         notFound();
         return;
       }
-      
+
       console.log('User found:', userData);
       setUser(userData);
-      
+
       // Get user's posts
-      const userPosts = getPostsByAuthor(userData.id);
+      const userPosts = await getPostsByAuthor(userData.id);
       console.log('User posts:', userPosts);
       setPosts(userPosts);
-      
+
       // Get follower/following counts
-      const followers = getFollowerCount(userData.id);
-      const following = getFollowingCount(userData.id);
+      const followers = await getFollowerCount(userData.id);
+      const following = await getFollowingCount(userData.id);
       setFollowerCount(followers);
       setFollowingCount(following);
-      
+
       setIsLoading(false);
     };
 

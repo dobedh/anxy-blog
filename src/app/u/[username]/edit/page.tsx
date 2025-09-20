@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { getUserByUsername, updateUser } from '@/utils/userUtils';
+import { getUserByUsername, updateUser } from '@/utils/supabaseUserUtils';
 import { User } from '@/types/user';
 
 interface EditProfilePageProps {
@@ -19,31 +19,35 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
-  const username = params.username;
+  const username = use(params).username;
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
+    const loadUserData = async () => {
+      if (!isAuthenticated) {
+        router.push('/login');
+        return;
+      }
 
-    const userData = getUserByUsername(username);
+      const userData = await getUserByUsername(username);
 
-    if (!userData) {
-      router.push('/404');
-      return;
-    }
+      if (!userData) {
+        router.push('/404');
+        return;
+      }
 
-    // 본인 프로필만 편집 가능
-    if (!currentUser || currentUser.id !== userData.id) {
-      router.push(`/u/${username}`);
-      return;
-    }
+      // 본인 프로필만 편집 가능
+      if (!currentUser || currentUser.id !== userData.id) {
+        router.push(`/u/${username}`);
+        return;
+      }
 
-    setUser(userData);
-    setDisplayName(userData.displayName);
-    setBio(userData.bio || '');
-    setIsLoading(false);
+      setUser(userData);
+      setDisplayName(userData.displayName);
+      setBio(userData.bio || '');
+      setIsLoading(false);
+    };
+
+    loadUserData();
   }, [username, currentUser, isAuthenticated, router]);
 
   const handleSave = async () => {
@@ -52,7 +56,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
     setIsSaving(true);
 
     try {
-      const result = updateUser(user.id, {
+      const result = await updateUser(user.id, {
         displayName: displayName.trim(),
         bio: bio.trim()
       });

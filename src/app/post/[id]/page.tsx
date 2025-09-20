@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Post } from '@/types/post';
-import { getPostById } from '@/utils/postUtils';
+import { getPostById } from '@/utils/supabasePostUtils';
+import { getPostById as getLocalPostById } from '@/utils/postUtils';
 import { Comment } from '@/types/comment';
 import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,16 +26,22 @@ export default function PostPage({ params }: PostPageProps) {
 
   const { currentUser, isAuthenticated } = useAuth();
 
-  const postId = params.id;
+  const postId = use(params).id;
 
   useEffect(() => {
-    const loadPost = () => {
+    const loadPost = async () => {
       setIsLoading(true);
 
       console.log('Loading post with ID:', postId);
 
-      // Get post data
-      const postData = getPostById(postId);
+      // Try Supabase first
+      let postData = await getPostById(postId);
+
+
+      // If still not found, try localStorage (legacy posts)
+      if (!postData) {
+        postData = getLocalPostById(postId);
+      }
 
       if (!postData) {
         console.log('Post not found:', postId);
