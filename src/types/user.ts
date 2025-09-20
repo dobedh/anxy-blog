@@ -32,16 +32,26 @@ export interface AuthUser {
   id: string;
   username: string;
   displayName: string;
+  email?: string;
+  avatarUrl?: string;
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
 export interface SignupData {
-  username: string;
+  email: string;
   password: string;
+  username: string;
+  displayName: string;
+  bio?: string;
+}
+
+// OAuth 로그인 데이터
+export interface OAuthSignupData {
+  username: string;
   displayName: string;
   bio?: string;
 }

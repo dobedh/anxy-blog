@@ -7,13 +7,14 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: '',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { login, isAuthenticated } = useAuth();
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'kakao' | null>(null);
+
+  const { login, signInWithGoogle, signInWithKakao, isAuthenticated } = useAuth();
   const router = useRouter();
 
   // 이미 로그인된 사용자는 홈으로 리다이렉트
@@ -41,7 +42,7 @@ export default function LoginPage() {
 
     try {
       const result = await login(formData);
-      
+
       if (result.success) {
         router.push('/');
       } else {
@@ -51,6 +52,40 @@ export default function LoginPage() {
       setError('로그인 중 오류가 발생했습니다.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setOauthLoading('google');
+
+    try {
+      const result = await signInWithGoogle();
+      if (!result.success && result.error) {
+        setError(result.error);
+      }
+      // 성공시 OAuth 콜백에서 처리됨
+    } catch (err) {
+      setError('구글 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setOauthLoading(null);
+    }
+  };
+
+  const handleKakaoLogin = async () => {
+    setError('');
+    setOauthLoading('kakao');
+
+    try {
+      const result = await signInWithKakao();
+      if (!result.success && result.error) {
+        setError(result.error);
+      }
+      // 성공시 OAuth 콜백에서 처리됨
+    } catch (err) {
+      setError('카카오 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setOauthLoading(null);
     }
   };
 
@@ -76,25 +111,25 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* 사용자명 */}
+          {/* 이메일 */}
           <div>
-            <label 
-              htmlFor="username" 
+            <label
+              htmlFor="email"
               className="block text-caption text-muted mb-3 font-medium"
             >
-              사용자명
+              이메일
             </label>
             <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
               onChange={handleInputChange}
-              placeholder="사용자명을 입력하세요"
+              placeholder="이메일을 입력하세요"
               className="w-full px-4 py-4 text-body border-2 border-accent bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none focus:border-primary transition-gentle focus-ring"
               style={{ minHeight: '44px' }}
               required
-              disabled={isLoading}
+              disabled={isLoading || oauthLoading !== null}
             />
           </div>
 
@@ -116,14 +151,14 @@ export default function LoginPage() {
               className="w-full px-4 py-4 text-body border-2 border-accent bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none focus:border-primary transition-gentle focus-ring"
               style={{ minHeight: '44px' }}
               required
-              disabled={isLoading}
+              disabled={isLoading || oauthLoading !== null}
             />
           </div>
 
           {/* 로그인 버튼 */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || oauthLoading !== null}
             className="w-full bg-primary text-surface px-6 py-4 rounded-lg text-body font-semibold hover:bg-primary-hover transition-gentle focus-ring shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ minHeight: '44px' }}
           >
@@ -137,6 +172,21 @@ export default function LoginPage() {
             )}
           </button>
         </form>
+
+        {/* 구분선 */}
+        <div className="mt-8 flex items-center">
+          <div className="flex-1 border-t border-accent"></div>
+          <span className="px-4 text-sm text-muted">또는</span>
+          <div className="flex-1 border-t border-accent"></div>
+        </div>
+
+        {/* OAuth 로그인 버튼들 - 임시 비활성화 */}
+        <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-sm text-gray-600 text-center">
+            소셜 로그인은 곧 제공될 예정입니다.<br/>
+            현재는 이메일 회원가입을 이용해주세요.
+          </p>
+        </div>
 
         {/* 회원가입 링크 */}
         <div className="mt-8 text-center">
@@ -155,13 +205,13 @@ export default function LoginPage() {
         {/* 개발용 도우미 정보 */}
         <div className="mt-12 p-6 bg-subtle rounded-lg border border-accent">
           <h3 className="text-caption font-semibold text-foreground mb-3">
-            💡 개발용 테스트 계정
+            💡 이제 Supabase 사용
           </h3>
           <div className="text-sm text-muted space-y-2">
-            <p><strong>사용자명:</strong> mindful_writer</p>
-            <p><strong>비밀번호:</strong> password1</p>
+            <p>이제 실제 이메일과 비밀번호로 회원가입/로그인할 수 있습니다.</p>
+            <p>구글 또는 카카오 계정으로도 간편하게 로그인하세요.</p>
             <p className="text-xs pt-2 border-t border-accent">
-              * 목업 사용자들의 비밀번호는 password1~5입니다
+              * 기존 localStorage 데이터는 로그인 후 마이그레이션할 수 있습니다
             </p>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { createPost } from '@/utils/postUtils';
+import { createPost } from '@/utils/supabasePostUtils';
 import { CreatePostData } from '@/types/post';
 import WriteHeader from '@/components/layout/WriteHeader';
 
@@ -15,7 +15,6 @@ function WritePageContent() {
   const [formData, setFormData] = useState<CreatePostData>({
     title: '',
     content: '',
-    category: 'free',
     isAnonymous: false,
     isPrivate: false,
   });
@@ -26,7 +25,7 @@ function WritePageContent() {
     setIsSaved(false); // Mark as unsaved when content changes
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       return;
@@ -45,7 +44,7 @@ function WritePageContent() {
     setIsSubmitting(true);
 
     try {
-      const result = createPost(formData, currentUser.id);
+      const result = await createPost(formData, currentUser.id);
 
       if (result.success) {
         setIsSaved(true);

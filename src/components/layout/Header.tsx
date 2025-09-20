@@ -85,7 +85,7 @@ export default function Header() {
 
             {/* Mobile Sidebar Overlay */}
             {isMenuOpen && (
-              <div className={`fixed left-0 top-0 h-full w-80 bg-white transform transition-all duration-400 ease-out shadow-2xl z-50 ${
+              <div className={`fixed inset-y-0 left-0 w-80 bg-white transform transition-all duration-400 ease-out shadow-2xl z-50 pb-20 ${
                 isMenuOpen ? 'translate-x-0' : '-translate-x-full'
               }`}>
                 {isAuthenticated ? (
@@ -99,10 +99,7 @@ export default function Header() {
                           className="flex items-center space-x-3 flex-1"
                           onClick={() => setIsMenuOpen(false)}
                         >
-                          <div className="w-12 h-12 bg-brunch-light-green rounded-full flex items-center justify-center">
-                            <span className="text-lg font-semibold text-brunch-green">
-                              {currentUser?.displayName.charAt(0)}
-                            </span>
+                          <div className="w-12 h-12 bg-brunch-light-green rounded-full">
                           </div>
                           <div>
                             <p className="text-base font-medium text-gray-900">
@@ -114,7 +111,7 @@ export default function Header() {
                         {/* Write Button */}
                         <Link
                           href="/write"
-                          className="ml-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors"
+                          className="ml-4 px-5 py-2 bg-white text-gray-600 border border-gray-400 rounded-full hover:bg-gray-50 hover:text-gray-700 hover:border-gray-500 transition-colors text-sm font-medium"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           글쓰기
@@ -221,6 +218,21 @@ export default function Header() {
                     </div>
                   </>
                 )}
+
+                {/* Logout Section - Absolute Bottom */}
+                {isAuthenticated && (
+                  <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200 bg-white">
+                    <button
+                      onClick={() => {
+                        logout();
+                        setIsMenuOpen(false);
+                      }}
+                      className="w-full px-5 py-2 bg-white text-gray-500 rounded-full hover:bg-gray-50 hover:text-gray-600 transition-colors text-sm font-medium"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -258,14 +270,15 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Right Side - Write, Notifications, Profile */}
-        <div className="flex items-center gap-2 pr-6">
+        {/* Right Side - Write, Profile */}
+        <div className="flex items-center gap-4 pr-6">
           {isAuthenticated ? (
             <>
               {/* Write Button */}
               <Link
                 href="/write"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                title="글쓰기"
               >
                 <svg
                   className="w-5 h-5"
@@ -280,37 +293,12 @@ export default function Header() {
                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                   />
                 </svg>
-                <span>Write</span>
+                <span>글쓰기</span>
               </Link>
-
-              {/* Notification Bell */}
-              <button
-                className="p-2 text-gray-600 hover:text-gray-900 transition-colors relative"
-                aria-label="Notifications"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-                {/* Optional notification dot */}
-                {/* <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span> */}
-              </button>
 
               {/* Profile Image */}
               <Link href={`/u/${currentUser?.username}`}>
-                <div className="w-8 h-8 bg-gray-300 rounded-full focus:outline-none hover:bg-gray-400 transition-colors cursor-pointer flex items-center justify-center">
-                  <span className="text-sm font-semibold text-gray-700">
-                    {currentUser?.displayName.charAt(0)}
-                  </span>
+                <div className="w-8 h-8 border border-gray-200 rounded-full focus:outline-none hover:bg-gray-100 transition-colors cursor-pointer">
                 </div>
               </Link>
             </>

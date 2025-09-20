@@ -18,7 +18,7 @@ export default function LibraryPage() {
         const allPostsStr = localStorage.getItem('anxy_posts');
         if (allPostsStr) {
           const allPosts = JSON.parse(allPostsStr) as Post[];
-          const filteredPosts = allPosts.filter(post => likedPostIds.includes(post.id));
+          const filteredPosts = allPosts.filter(post => likedPostIds.includes(post.id.toString()));
           setLikedPosts(filteredPosts);
         }
       } catch (error) {

@@ -6,7 +6,6 @@ import {
   PostSortOption, 
   LegacyPost,
   POST_STORAGE_KEYS,
-  CATEGORIES 
 } from '@/types/post';
 import { getUserById } from './userUtils';
 
@@ -73,7 +72,6 @@ export function migrateLegacyPost(legacyPost: LegacyPost): Post {
     author: legacyPost.author,
     authorId: undefined, // 기존 글은 작성자 ID가 없음
     authorName: legacyPost.author,
-    category: legacyPost.category,
     date: legacyPost.date,
     createdAt: new Date().toISOString(), // 임시 생성일
     likes: legacyPost.likes,
@@ -104,12 +102,6 @@ export function createPost(
       return { success: false, error: '내용을 입력해주세요.' };
     }
     
-    // 카테고리 검증
-    const validCategory = CATEGORIES.find(cat => cat.value === data.category);
-    if (!validCategory) {
-      return { success: false, error: '올바른 카테고리를 선택해주세요.' };
-    }
-    
     // 새 글 객체 생성
     const now = new Date().toISOString();
     const newPost: Post = {
@@ -120,7 +112,6 @@ export function createPost(
       author: data.isAnonymous ? '익명' : author.displayName,
       authorId: data.isAnonymous ? undefined : authorId,
       authorName: author.displayName,
-      category: validCategory.label,
       date: '방금 전',
       createdAt: now,
       updatedAt: now,
@@ -224,10 +215,6 @@ export function getPosts(
     if (filters) {
       if (filters.authorId) {
         posts = posts.filter(post => post.authorId === filters.authorId);
-      }
-      
-      if (filters.category) {
-        posts = posts.filter(post => post.category === filters.category);
       }
       
       if (filters.isPrivate !== undefined) {

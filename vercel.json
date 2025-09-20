@@ -1,0 +1,13 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "outputDirectory": ".next",
+  "regions": ["icn1"],
+  "functions": {
+    "app/**": {
+      "maxDuration": 10
+    }
+  }
+}

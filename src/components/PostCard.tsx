@@ -7,7 +7,7 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { id, title, excerpt, author, category, date, likes } = post;
+  const { id, title, excerpt, author, date, likes } = post;
   const commentCount = getCommentCount(id);
   return (
     <article className="py-8 border-b border-gray-200 last:border-b-0 group">
@@ -16,8 +16,6 @@ export default function PostCard({ post }: PostCardProps) {
         <span className="font-medium">{author}</span>
         <span>·</span>
         <time>{date}</time>
-        <span>·</span>
-        <span className="text-gray-600">{category}</span>
       </div>
       
       {/* Content */}
