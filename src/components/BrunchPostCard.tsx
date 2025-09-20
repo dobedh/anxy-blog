@@ -53,26 +53,26 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
   };
 
   return (
-    <article className="py-8 border-b border-gray-200 last:border-b-0 group">
+    <article className="py-6 border-b border-gray-200 last:border-b-0 group">
       <div className="post-card-horizontal">
         {/* Content Section - Left */}
         <div className="flex-1">
           {/* Content */}
           <Link href={`/post/${id}`} className="block">
-            <h2 className="text-post-title text-gray-900 mb-3 group-hover:text-gray-700 transition-colors leading-tight line-clamp-2">
+            <h2 className="text-lg text-gray-900 mb-2 group-hover:text-gray-700 transition-colors leading-tight line-clamp-2 font-medium">
               {title}
             </h2>
-            <p className="text-gray-500 text-base leading-loose mb-4 line-clamp-3">
+            <p className="text-gray-500 text-sm leading-relaxed mb-3 line-clamp-3">
               {excerpt}
             </p>
           </Link>
 
           {/* Meta Information - Moved to bottom */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-meta-info">
-              <span className="text-gray-400 font-medium text-sm">{author}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 font-normal text-xs">{author}</span>
               <span className="text-gray-300">·</span>
-              <time className="text-gray-400 text-sm">{date}</time>
+              <time className="text-gray-400 text-xs">{date}</time>
             </div>
 
             {/* Like button */}
