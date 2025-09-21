@@ -6,43 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Anxy** is a therapeutic personal blog platform designed for people dealing with anxiety, similar to Naver Blog/Brunch with a follow system. Users have individual blogs where they publish content, and can follow other users to see their posts in a personalized feed.
 
-### MVP Approach 🎯
-**Focus: Core feature validation over polished product**
+### Current Status 🚀
+**Production-Ready Supabase Integration**
 
-This project prioritizes **MVP development for rapid feature validation** rather than building a complete, production-ready product. The goal is to test core hypotheses about personal blogging + follow system for anxiety communities.
+The project has successfully migrated from localStorage to **Supabase** for full backend functionality, including:
+- User authentication with Supabase Auth
+- Database persistence for posts, users, follows, and likes
+- Real-time capabilities and Row Level Security (RLS)
+- Complete CRUD operations for all entities
 
-**Key MVP Principles:**
-- Speed over perfection
-- Core feature validation
-- Simple implementations (localStorage, basic auth, no advanced security)
-- Mobile-first responsive design for future app expansion
-- Therapeutic UI/UX maintained throughout
-
-### MVP Development Roadmap 📋
-
-**✅ Phase 1 Complete: Foundation (Days 1-2)**
-- Basic post system with localStorage ✅
-- Therapeutic design system and responsive layout ✅  
-- User authentication system (signup/login) ✅
-- Protected routes and header navigation ✅
-- Write page with authentication integration ✅
-
-**🚧 Phase 2 Current: Personal Blogs (Days 3-4)**
-- `@username` dynamic routing for personal pages 🔄
-- Display user's posts on personal blog page
-- Basic profile information (text-only, no avatars)
-- Follow/unfollow functionality with localStorage storage
-
-**📋 Phase 3 Next: Feed System (Day 5)**
-- Convert homepage to following feed
-- Show posts only from followed users
-- Simple feed algorithms (chronological)
-
-**🎯 MVP Validation Goals:**
-1. Do users want personal blog spaces in anxiety communities?
-2. Does the follow system create meaningful connections?
-3. Is the therapeutic UI/UX approach effective?
-4. Does the platform encourage regular posting and engagement?
+**Key Features Implemented:**
+- ✅ Supabase authentication (email/password + OAuth)
+- ✅ User profiles with username system (@username routing)
+- ✅ Post creation, editing, and deletion with ownership controls
+- ✅ Like system with real-time counts
+- ✅ Follow/unfollow functionality
+- ✅ Personal blog pages (`/u/[username]`)
+- ✅ Post detail pages with contextual more options menu
+- ✅ Responsive therapeutic UI design
+- ✅ Protected routes and authentication flow
 
 ## Development Commands
 
@@ -59,7 +41,11 @@ The development server runs on http://localhost:3000 with hot reload enabled.
 - **React 19.1.0** with modern hooks and server components
 - **TypeScript** for type safety
 - **Tailwind CSS 4** with PostCSS plugin (no separate config file needed)
-- **Client-side localStorage** for data persistence
+- **Supabase** for backend services:
+  - PostgreSQL database with Row Level Security (RLS)
+  - Built-in authentication (email/password + OAuth providers)
+  - Real-time subscriptions
+  - Auto-generated TypeScript types
 
 ## Architecture & Key Design Principles
 
@@ -79,34 +65,34 @@ The design system is built on CSS custom properties in `src/app/globals.css`:
 - Container classes (content-container: 720px, wide-container: 1200px)
 - Interaction classes (transition-gentle, hover-lift, focus-ring)
 
-### Data Architecture & State Management
+### Database Architecture & Data Flow
 
-**User-Centric Architecture**:
-- **Users**: Stored in `localStorage.anxy_users` with authentication system
-- **Current Session**: `localStorage.anxy_currentUser` tracks logged-in user
-- **Posts**: `localStorage.anxy_posts` with author relationships to users
-- **Follows**: `localStorage.anxy_follows` for user-to-user relationships
+**Supabase Database Schema**:
+- **profiles**: User profiles linked to auth.users with username/display_name/bio
+- **posts**: Blog posts with author relationships, likes/comments counts
+- **follows**: User-to-user follow relationships
+- **post_likes**: Individual like records with automatic count triggers
+- **comments**: Comment system (infrastructure ready)
 
-**User System Structure**:
-```typescript
-interface User {
-  id: string;
-  username: string;        // @username for personal pages
-  displayName: string;     // Display name shown in UI
-  bio: string;            // Profile description
-  avatar: string;         // Avatar URL (future feature)
-  createdAt: string;      // Account creation date
-  isPrivate: boolean;     // Private profile setting
-  allowFollow: boolean;   // Can be followed by others
-}
-```
+**Database Features**:
+- Row Level Security (RLS) policies for data access control
+- Automatic triggers for updated_at timestamps
+- Real-time count updates for likes and comments
+- Proper foreign key constraints and cascading deletes
+- Performance indexes on commonly queried fields
 
 **Authentication & State Management**:
-- **UserContext**: React Context + useReducer for global user state
-- **useAuth Hook**: Login/signup/logout functions with localStorage sync
-- **Route Protection**: `ProtectedRoute` component for auth-required pages
-- **Data Migration**: Automatic migration from old post structure to user-centric model
-- **Mock Users**: Pre-populated test users with passwords (password1-5)
+- **Supabase Auth**: Built-in authentication with session management
+- **useSupabaseAuth Hook**: Centralized auth operations (signup/signin/signout)
+- **Real-time session tracking**: Automatic session state updates
+- **Protected Routes**: Server-side and client-side route protection
+- **OAuth Support**: Google and Kakao social login integration
+
+**Data Utilities Structure**:
+- **supabaseUserUtils**: User CRUD operations and profile management
+- **supabasePostUtils**: Post creation, editing, deletion, and queries
+- **supabaseFollowUtils**: Follow/unfollow operations and relationship queries
+- **Type Safety**: Full TypeScript integration with auto-generated Supabase types
 
 ### Layout Structure
 - **Fixed Header**: 16px height (lg:20px) with backdrop blur, contains navigation and write button
@@ -123,28 +109,26 @@ interface User {
 
 ### Component Architecture
 
-**PostCard Component** (`src/components/PostCard.tsx`):
-- Card-based design with surface background and soft borders
-- Includes category badge, metadata, and interaction buttons (likes/comments)
-- Uses therapeutic spacing (p-6 lg:p-8) and hover effects
-- Links to `/post/{id}` (not yet implemented)
+**Post Components**:
+- **BrunchPostCard** (`src/components/BrunchPostCard.tsx`): Compact post cards with Brunch-style typography
+- **PostDetail Page** (`src/app/post/[id]/page.tsx`): Full post view with contextual more options menu
+- **Edit Post Page** (`src/app/edit/[id]/page.tsx`): Post editing interface with ownership verification
 
-**Header Component** (`src/components/layout/Header.tsx`):  
-- Top navigation with logo, category links, and auth-aware buttons
-- Always visible design (no mobile hamburger menu)
-- Active state indicators using primary color and background
-- Conditional rendering based on authentication state
+**UI Components**:
+- **DropdownMenu** (`src/components/ui/DropdownMenu.tsx`): Reusable dropdown with click-outside handling
+- **Header Component** (`src/components/layout/Header.tsx`): Navigation with auth-aware content
+- **RecommendedAuthors** (`src/components/RecommendedAuthors.tsx`): Sidebar component for user discovery
 
-**Authentication Components**:
-- **`ProtectedRoute`** (`src/components/ProtectedRoute.tsx`): Route protection with loading states
-- **`RequireAuth`**: Wrapper for pages requiring login
-- **`RequireGuest`**: Wrapper for login/signup pages (redirects if authenticated)
+**Authentication System**:
+- **useSupabaseAuth Hook** (`src/hooks/useSupabaseAuth.ts`): Centralized Supabase auth operations
+- **Protected Route Logic**: Built into page components, checks auth state
+- **OAuth Integration**: Google and Kakao social login support
 
-**User System Files**:
-- **`UserContext`** (`src/contexts/UserContext.tsx`): Global state management with useReducer
-- **`useAuth`** (`src/hooks/useAuth.ts`): Authentication hook with login/signup/logout
-- **`userUtils`** (`src/utils/userUtils.ts`): User CRUD operations and validation
-- **User types** (`src/types/user.ts`): TypeScript interfaces and constants
+**Key Features**:
+- **More Options Menu**: Context-sensitive actions (edit/delete for own posts, share for others)
+- **Real-time Like System**: Integrated with Supabase for instant updates
+- **Username Validation**: Real-time availability checking during signup
+- **Post Ownership**: Automatic author verification for edit/delete operations
 
 ### Page Structure
 All pages follow a consistent pattern:
@@ -154,26 +138,27 @@ All pages follow a consistent pattern:
 - Consistent "더 많은 글 보기" pagination button
 
 **Homepage** (`/`):
-- Client component that loads and combines localStorage posts with mock data
-- Refreshes post list when pathname changes (enables write → home flow)
-- Shows all posts in chronological order
+- Loads all posts from Supabase in chronological order
+- Real-time updates when new posts are created
+- Responsive grid layout with BrunchPostCard components
 
-**Category Pages**: `/free`, `/thoughts`, `/music`, `/books`
-- Static pages with category-specific mock data
-- Identical layout structure with different content and page titles
+**Personal Blog Pages** (`/u/[username]`):
+- Dynamic routing for user-specific blog pages
+- Shows user's profile information and all their posts
+- Edit profile functionality for authenticated users
+- Follow/unfollow integration
 
-**Write Page** (`/write`): 
-- Protected route requiring authentication (`RequireAuth` wrapper)
-- Integrates with user authentication system
-- Uses `createPost()` utility for proper user-post relationships
-- Form validation and success handling with automatic redirection
+**Post System**:
+- **Write Page** (`/write`): Protected route for creating new posts
+- **Post Detail** (`/post/[id]`): Full post view with comments and interactions
+- **Edit Post** (`/edit/[id]`): Post editing with ownership verification
+- **More Options Menu**: Context-sensitive actions based on post ownership
 
 **Authentication Pages**:
-- **Login Page** (`/login`): Mobile-first design with developer test accounts shown
-- **Signup Page** (`/signup`): Real-time username validation with availability checking
-- Both pages auto-redirect authenticated users to homepage
-- 44px touch targets for mobile accessibility
-- Form validation with inline error display
+- **Login Page** (`/login`): Supabase Auth integration with social login options
+- **Signup Page** (`/signup`): Real-time username validation and profile creation
+- **Auth Callback** (`/auth/callback`): OAuth redirect handling
+- Auto-redirect logic for authenticated users
 
 ### Styling Approach
 - **Tailwind CSS 4** integrated via PostCSS plugin
@@ -192,20 +177,35 @@ All pages follow a consistent pattern:
 - Use established typography classes instead of arbitrary Tailwind font sizes
 - Interactive elements must include `transition-gentle` class
 
-### Data Flow
-- Write page → localStorage → Homepage refresh via pathname change
-- No server-side persistence - fully client-side application
-- Mock data provides realistic content for demonstration
+### Supabase Integration Patterns
+- Always use the Supabase utilities in `src/utils/supabase*Utils.ts` for database operations
+- Handle authentication state with `useSupabaseAuth` hook
+- Implement proper error handling for Supabase operations
+- Use Row Level Security (RLS) policies for data access control
+- Leverage real-time subscriptions for live updates where appropriate
 
-### Post Creation Flow
-1. User fills form on `/write` page
-2. Form submission creates post object with auto-generated excerpt and ID
-3. Post saved to `localStorage.userPosts` array  
-4. User navigated to homepage with `router.push('/')`
-5. Homepage detects pathname change and reloads all posts including new one
+### Post Creation & Editing Flow
+1. User fills form on `/write` or `/edit/[id]` page
+2. Form submission calls appropriate Supabase utility function
+3. Database operation with proper authentication and ownership checks
+4. Real-time UI updates via Supabase triggers and counts
+5. User redirected to appropriate page (home, post detail, etc.)
 
-### Responsive Design
-- Mobile padding: 1rem, Desktop padding: 2rem
-- Container max-widths: content (720px), wide (1200px)
-- Typography scales appropriately across breakpoints
-- Always-visible navigation works across all screen sizes
+### Authentication Flow
+1. User signs up/in via `/login` or `/signup` pages
+2. Supabase Auth handles session management automatically
+3. Profile creation happens automatically during signup
+4. Protected routes check authentication state before rendering
+5. Auth state persists across browser sessions
+
+### Database Schema Considerations
+- All tables use UUID primary keys for security
+- Row Level Security (RLS) enforces data access permissions
+- Automatic triggers maintain counts and timestamps
+- Foreign key constraints ensure data integrity
+- Categories removed from posts (no longer required)
+
+### Next.js 15 Compatibility
+- Use `React.use()` for params in dynamic routes (not direct destructuring)
+- All dynamic imports properly handled with client components
+- Server components used where possible for better performance

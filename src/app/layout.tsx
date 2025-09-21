@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import ConditionalHeader from "@/components/layout/ConditionalHeader";
-import { UserProvider } from "@/contexts/UserContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,12 +30,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${sourceSerif.variable} antialiased min-h-screen bg-background text-foreground`}
       >
-        <UserProvider>
           <ConditionalHeader />
           <main className="pt-16">
             {children}
           </main>
-        </UserProvider>
       </body>
     </html>
   );

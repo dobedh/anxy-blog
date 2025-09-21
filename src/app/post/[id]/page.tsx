@@ -4,11 +4,12 @@ import { useEffect, useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Post } from '@/types/post';
-import { getPostById } from '@/utils/supabasePostUtils';
-import { getPostById as getLocalPostById } from '@/utils/postUtils';
+import { getPostById, deletePost } from '@/utils/supabasePostUtils';
 import { Comment } from '@/types/comment';
 import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
 import { useAuth } from '@/hooks/useAuth';
+import DropdownMenu from '@/components/ui/DropdownMenu';
+import { useRouter } from 'next/navigation';
 
 interface PostPageProps {
   params: { id: string };
@@ -25,6 +26,7 @@ export default function PostPage({ params }: PostPageProps) {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   const { currentUser, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const postId = use(params).id;
 
@@ -34,14 +36,8 @@ export default function PostPage({ params }: PostPageProps) {
 
       console.log('Loading post with ID:', postId);
 
-      // Try Supabase first
-      let postData = await getPostById(postId);
-
-
-      // If still not found, try localStorage (legacy posts)
-      if (!postData) {
-        postData = getLocalPostById(postId);
-      }
+      // Load post from Supabase
+      const postData = await getPostById(postId);
 
       if (!postData) {
         console.log('Post not found:', postId);
@@ -73,6 +69,60 @@ export default function PostPage({ params }: PostPageProps) {
   const handleFollowClick = () => {
     setIsFollowing(!isFollowing);
     // TODO: Implement actual follow/unfollow logic
+  };
+
+  const handleDeletePost = async () => {
+    if (!post || !currentUser) return;
+
+    const confirmDelete = confirm('정말로 이 글을 삭제하시겠습니까?');
+    if (!confirmDelete) return;
+
+    try {
+      const result = await deletePost(post.id, currentUser.id);
+      if (result.success) {
+        alert('글이 삭제되었습니다.');
+        router.push('/');
+      } else {
+        alert(result.error || '글 삭제 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('Delete post error:', error);
+      alert('글 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleEditPost = () => {
+    if (!post) return;
+    router.push(`/edit/${post.id}`);
+  };
+
+  const handleSharePost = async () => {
+    if (!post) return;
+
+    const postUrl = window.location.href;
+
+    // Try Web Share API first (for mobile)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: post.title,
+          text: post.excerpt || post.title,
+          url: postUrl
+        });
+      } catch (error) {
+        // User cancelled share or error occurred
+        console.log('Share cancelled or error:', error);
+      }
+    } else {
+      // Fallback to clipboard copy
+      try {
+        await navigator.clipboard.writeText(postUrl);
+        alert('링크가 복사되었습니다!');
+      } catch (error) {
+        console.error('Copy to clipboard error:', error);
+        alert('링크 복사 중 오류가 발생했습니다.');
+      }
+    }
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -130,6 +180,20 @@ export default function PostPage({ params }: PostPageProps) {
     return null; // notFound() will handle this
   }
 
+  // Check if current user is the post author
+  const isOwner = currentUser && post?.authorId && currentUser.id === post.authorId;
+  const canEdit = isOwner && !post?.isAnonymous;
+
+  // Prepare menu items based on ownership
+  const menuItems = isOwner
+    ? [
+        { label: '수정하기', onClick: handleEditPost },
+        { label: '삭제하기', onClick: handleDeletePost, className: 'text-red-600 hover:bg-red-50' }
+      ]
+    : [
+        { label: '공유하기', onClick: handleSharePost }
+      ];
+
   return (
     <div className="content-container space-2xl pt-64">
       {/* 1. Title */}
@@ -139,8 +203,9 @@ export default function PostPage({ params }: PostPageProps) {
         </h1>
       </div>
 
-      {/* 2. Author info with follow button and date */}
-      <div className="flex items-center justify-between mb-6">
+      {/* 2. Author info with follow button, date, and menu */}
+      <div className="flex items-center gap-4 mb-6">
+        {/* Left section: Author + Follow button */}
         <div className="flex items-center gap-4">
           <span className="text-lg font-medium text-gray-900">{post.author}</span>
           <button
@@ -150,7 +215,25 @@ export default function PostPage({ params }: PostPageProps) {
             {isFollowing ? 'Following' : 'Follow'}
           </button>
         </div>
-        <span className="text-sm text-gray-500">{post.date}</span>
+
+        {/* Spacer to push date and menu to the right */}
+        <div className="flex-1"></div>
+
+        {/* Right section: Date + Menu button */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-500">{post.date}</span>
+          <DropdownMenu
+            trigger={
+              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="1" />
+                <circle cx="12" cy="5" r="1" />
+                <circle cx="12" cy="19" r="1" />
+              </svg>
+            }
+            items={menuItems}
+            align="right"
+          />
+        </div>
       </div>
 
       {/* 3. Separator line */}

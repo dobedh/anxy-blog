@@ -26,11 +26,13 @@ interface UseAuthReturn {
 export function useAuth(): UseAuthReturn {
   const { user, loading, signIn, signUp, signOut, signInWithGoogle, signInWithKakao, checkUsernameAvailability } = useSupabaseAuth();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [userLoading, setUserLoading] = useState(false);
 
   // Supabase User를 AuthUser로 변환
   useEffect(() => {
     const convertUser = async () => {
       if (user) {
+        setUserLoading(true);
         try {
           const { data: profile, error } = await supabase
             .from('profiles')
@@ -41,6 +43,7 @@ export function useAuth(): UseAuthReturn {
           if (error) {
             console.error('Error fetching profile:', error);
             setCurrentUser(null);
+            setUserLoading(false);
             return;
           }
 
@@ -51,12 +54,15 @@ export function useAuth(): UseAuthReturn {
             email: user.email,
             avatarUrl: profile.avatar_url
           });
+          setUserLoading(false);
         } catch (error) {
           console.error('Error converting user:', error);
           setCurrentUser(null);
+          setUserLoading(false);
         }
       } else {
         setCurrentUser(null);
+        setUserLoading(false);
       }
     };
 
@@ -157,8 +163,8 @@ export function useAuth(): UseAuthReturn {
   return {
     // 상태
     currentUser,
-    isAuthenticated: !!user, // user가 있으면 인증된 것으로 처리
-    isLoading: loading,
+    isAuthenticated: !!user, // user가 있으면 인증된 것으로 처리 (currentUser는 별도로 체크)
+    isLoading: loading || userLoading, // auth loading 또는 user loading 중이면 loading
 
     // 액션
     login,

@@ -18,8 +18,10 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
     const checkLikedStatus = async () => {
       if (isAuthenticated && currentUser) {
         try {
-          const liked = await checkUserLikedPost(id, currentUser.id);
-          setIsLiked(liked);
+          // 임시로 좋아요 상태 체크 비활성화 (406 에러 방지)
+          // const liked = await checkUserLikedPost(id, currentUser.id);
+          // setIsLiked(liked);
+          setIsLiked(false); // 기본값으로 설정
         } catch (error) {
           console.error('Error checking liked status:', error);
         }

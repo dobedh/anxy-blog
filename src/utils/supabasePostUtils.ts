@@ -134,9 +134,18 @@ export async function updatePost(
     }
 
     // 권한 체크 (본인 글이거나 익명 글인 경우)
+    console.log('🔍 DEBUGGING UPDATEPOST PERMISSION:');
+    console.log('existingPost.author_id:', existingPost.author_id, typeof existingPost.author_id);
+    console.log('authorId parameter:', authorId, typeof authorId);
+    console.log('Are they equal?', existingPost.author_id === authorId);
+    console.log('existingPost object:', existingPost);
+
     if (existingPost.author_id && existingPost.author_id !== authorId) {
+      console.log('❌ PERMISSION DENIED: author_id mismatch');
       return { success: false, error: '글을 수정할 권한이 없습니다.' };
     }
+
+    console.log('✅ PERMISSION GRANTED: proceeding with update');
 
     // 업데이트 데이터 준비
     const updateData: any = {

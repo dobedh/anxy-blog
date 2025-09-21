@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import { User } from '@/types/user';
 import { Post } from '@/types/post';
@@ -21,7 +21,7 @@ export default function UserPage({ params }: UserPageProps) {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
-  const username = params.username;
+  const username = use(params).username;
 
   useEffect(() => {
     const loadUserData = async () => {
