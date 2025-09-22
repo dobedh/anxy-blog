@@ -111,10 +111,23 @@ export default function Header() {
                         {/* Write Button */}
                         <Link
                           href="/write"
-                          className="ml-4 px-5 py-2 bg-white text-gray-600 border border-gray-400 rounded-full hover:bg-gray-50 hover:text-gray-700 hover:border-gray-500 transition-colors text-sm font-medium"
+                          className="ml-4 p-2 bg-white text-gray-600 border border-gray-400 rounded-full hover:bg-gray-50 hover:text-gray-700 hover:border-gray-500 transition-colors"
                           onClick={() => setIsMenuOpen(false)}
+                          title="글쓰기"
                         >
-                          글쓰기
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
                         </Link>
                       </div>
                     </div>
@@ -293,7 +306,7 @@ export default function Header() {
                     d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                   />
                 </svg>
-                <span>글쓰기</span>
+                <span className="hidden lg:inline">글쓰기</span>
               </Link>
 
               {/* Profile Image */}

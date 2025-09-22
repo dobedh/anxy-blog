@@ -91,10 +91,10 @@ export default function UserPage({ params }: UserPageProps) {
           <FollowButton
             targetUserId={user.id}
             targetUsername={user.username}
-            onFollowChange={(isFollowing) => {
-              // 팔로우 상태가 변경되면 카운트 업데이트
-              const newFollowerCount = isFollowing ? followerCount + 1 : followerCount - 1;
-              setFollowerCount(Math.max(0, newFollowerCount));
+            onFollowChange={async (isFollowing) => {
+              // 팔로우 상태가 변경되면 실제 Supabase에서 카운트 다시 가져오기
+              const updatedFollowerCount = await getFollowerCount(user.id);
+              setFollowerCount(updatedFollowerCount);
             }}
           />
         </div>

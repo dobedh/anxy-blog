@@ -9,6 +9,7 @@ import { Comment } from '@/types/comment';
 import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
 import { useAuth } from '@/hooks/useAuth';
 import DropdownMenu from '@/components/ui/DropdownMenu';
+import FollowButton from '@/components/FollowButton';
 import { useRouter } from 'next/navigation';
 
 interface PostPageProps {
@@ -18,7 +19,6 @@ interface PostPageProps {
 export default function PostPage({ params }: PostPageProps) {
   const [post, setPost] = useState<Post | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentCount, setCommentCount] = useState(0);
@@ -66,10 +66,6 @@ export default function PostPage({ params }: PostPageProps) {
     }
   }, [postId]);
 
-  const handleFollowClick = () => {
-    setIsFollowing(!isFollowing);
-    // TODO: Implement actual follow/unfollow logic
-  };
 
   const handleDeletePost = async () => {
     if (!post || !currentUser) return;
@@ -208,12 +204,13 @@ export default function PostPage({ params }: PostPageProps) {
         {/* Left section: Author + Follow button */}
         <div className="flex items-center gap-4">
           <span className="text-lg font-medium text-gray-900">{post.author}</span>
-          <button
-            onClick={handleFollowClick}
-            className="px-4 py-1.5 text-sm font-medium rounded-full border border-gray-300 text-gray-700 transition-colors hover:border-gray-400"
-          >
-            {isFollowing ? 'Following' : 'Follow'}
-          </button>
+          {post.authorId && (
+            <FollowButton
+              targetUserId={post.authorId}
+              targetUsername={post.author}
+              variant="compact"
+            />
+          )}
         </div>
 
         {/* Spacer to push date and menu to the right */}
