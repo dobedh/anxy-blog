@@ -117,15 +117,15 @@ export default function LoginPage() {
               htmlFor="email"
               className="block text-caption text-muted mb-3 font-medium"
             >
-              이메일
+              이메일 또는 닉네임
             </label>
             <input
-              type="email"
+              type="text"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="이메일을 입력하세요"
+              placeholder="이메일 또는 닉네임을 입력하세요"
               className="w-full px-4 py-4 text-body border-2 border-accent bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none focus:border-primary transition-gentle focus-ring"
               style={{ minHeight: '44px' }}
               required

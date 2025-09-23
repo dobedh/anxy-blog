@@ -9,6 +9,7 @@ import { getPostsByAuthor } from '@/utils/supabasePostUtils';
 import { getFollowerCount, getFollowingCount } from '@/utils/supabaseFollowUtils';
 import PostCard from '@/components/PostCard';
 import FollowButton from '@/components/FollowButton';
+import FollowersModal from '@/components/FollowersModal';
 
 interface UserPageProps {
   params: { username: string };
@@ -20,6 +21,10 @@ export default function UserPage({ params }: UserPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    type: 'followers' | 'following' | null;
+  }>({ isOpen: false, type: null });
 
   const username = use(params).username;
 
@@ -105,14 +110,20 @@ export default function UserPage({ params }: UserPageProps) {
             <div className="font-semibold text-foreground">{posts.length}</div>
             <div>글</div>
           </div>
-          <div className="text-center">
+          <button
+            onClick={() => setModalState({ isOpen: true, type: 'followers' })}
+            className="text-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer"
+          >
             <div className="font-semibold text-foreground">{followerCount}</div>
             <div>팔로워</div>
-          </div>
-          <div className="text-center">
+          </button>
+          <button
+            onClick={() => setModalState({ isOpen: true, type: 'following' })}
+            className="text-center hover:bg-gray-50 rounded-lg p-2 transition-colors cursor-pointer"
+          >
             <div className="font-semibold text-foreground">{followingCount}</div>
             <div>팔로잉</div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -138,6 +149,17 @@ export default function UserPage({ params }: UserPageProps) {
           </div>
         )}
       </div>
+
+      {/* 팔로워/팔로잉 모달 */}
+      {modalState.isOpen && modalState.type && user && (
+        <FollowersModal
+          isOpen={modalState.isOpen}
+          onClose={() => setModalState({ isOpen: false, type: null })}
+          userId={user.id}
+          type={modalState.type}
+          initialCount={modalState.type === 'followers' ? followerCount : followingCount}
+        />
+      )}
     </div>
   );
 }

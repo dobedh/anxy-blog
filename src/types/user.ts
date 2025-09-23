@@ -20,6 +20,7 @@ export interface CreateUserData {
 }
 
 export interface UpdateUserData {
+  username?: string;
   displayName?: string;
   bio?: string;
   avatar?: string;

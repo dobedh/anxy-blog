@@ -46,27 +46,46 @@ export default function SignupPage() {
     }
   };
 
-  // 사용자명 기본 검증만 수행 (CORS 에러로 인해 중복체크 임시 비활성화)
+  // 사용자명 실시간 중복 체크
   useEffect(() => {
     if (!formData.username) {
       setIsCheckingUsername(false);
       return;
     }
 
-    // 기본 유효성 검사만 수행
-    const validation = validateUsername(formData.username);
-    if (!validation.isValid) {
-      setErrors(prev => ({ ...prev, username: validation.error! }));
-    } else {
-      // 사용자명이 유효하면 에러 제거
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.username;
-        return newErrors;
-      });
-    }
-    setIsCheckingUsername(false);
-  }, [formData.username]);
+    const checkUsername = async () => {
+      setIsCheckingUsername(true);
+
+      // 기본 유효성 검사 먼저 수행
+      const validation = validateUsername(formData.username);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, username: validation.error! }));
+        setIsCheckingUsername(false);
+        return;
+      }
+
+      // 중복 체크 수행
+      const { available, error } = await checkUsernameAvailability(formData.username);
+
+      if (error) {
+        setErrors(prev => ({ ...prev, username: '사용자명 확인 중 오류가 발생했습니다. 다시 시도해주세요.' }));
+      } else if (!available) {
+        setErrors(prev => ({ ...prev, username: '이미 사용 중인 사용자명입니다.' }));
+      } else {
+        // 사용 가능한 사용자명
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.username;
+          return newErrors;
+        });
+      }
+
+      setIsCheckingUsername(false);
+    };
+
+    const debounceTimer = setTimeout(checkUsername, 500); // 500ms 디바운스
+    return () => clearTimeout(debounceTimer);
+  }, [formData.username, checkUsernameAvailability]);
 
   // 비밀번호 확인 검증
   useEffect(() => {
@@ -217,9 +236,15 @@ export default function SignupPage() {
                 required
                 disabled={isLoading}
               />
-              {isCheckingUsername && (
+              {isCheckingUsername ? (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                </div>
+              ) : formData.username && !errors.username && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
               )}
             </div>

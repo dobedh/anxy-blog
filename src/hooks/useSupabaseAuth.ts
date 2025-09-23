@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { isEmailFormat, checkUsernameExists } from '@/utils/supabaseUserUtils'
 
 export interface AuthState {
   user: User | null
@@ -99,6 +100,40 @@ export function useSupabaseAuth() {
     }
   }
 
+  // 이메일 또는 닉네임으로 로그인
+  const signInWithEmailOrUsername = async (emailOrUsername: string, password: string) => {
+    try {
+      // 입력값이 이메일 형식인지 확인
+      if (isEmailFormat(emailOrUsername)) {
+        // 이메일로 직접 로그인
+        return await signIn(emailOrUsername, password)
+      } else {
+        // 닉네임으로 간주하고 사용자 존재 여부 확인
+        const usernameExists = await checkUsernameExists(emailOrUsername)
+
+        if (!usernameExists) {
+          return {
+            data: null,
+            error: { message: '존재하지 않는 사용자명입니다.' }
+          }
+        }
+
+        // 닉네임이 존재하면 이메일을 입력하라고 안내
+        return {
+          data: null,
+          error: {
+            message: `'${emailOrUsername}' 계정으로 로그인하려면 해당 계정의 이메일 주소를 입력해주세요.`,
+            isUsernameLogin: true,
+            username: emailOrUsername
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error signing in with email or username:', error)
+      return { data: null, error }
+    }
+  }
+
   // 구글 OAuth 로그인
   const signInWithGoogle = async () => {
     try {
@@ -172,6 +207,7 @@ export function useSupabaseAuth() {
     ...authState,
     signUp,
     signIn,
+    signInWithEmailOrUsername,
     signInWithGoogle,
     signInWithKakao,
     signOut,

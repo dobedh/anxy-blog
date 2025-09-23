@@ -24,7 +24,7 @@ interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
-  const { user, loading, signIn, signUp, signOut, signInWithGoogle, signInWithKakao, checkUsernameAvailability } = useSupabaseAuth();
+  const { user, loading, signIn, signInWithEmailOrUsername, signUp, signOut, signInWithGoogle, signInWithKakao, checkUsernameAvailability } = useSupabaseAuth();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [userLoading, setUserLoading] = useState(false);
 
@@ -71,7 +71,7 @@ export function useAuth(): UseAuthReturn {
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
-      const { data, error } = await signIn(credentials.email, credentials.password);
+      const { data, error } = await signInWithEmailOrUsername(credentials.email, credentials.password);
 
       if (error) {
         return { success: false, error: error.message || '로그인에 실패했습니다.' };
@@ -82,7 +82,7 @@ export function useAuth(): UseAuthReturn {
       console.error('Login error:', error);
       return { success: false, error: '로그인 중 오류가 발생했습니다.' };
     }
-  }, [signIn]);
+  }, [signInWithEmailOrUsername]);
 
   const signup = useCallback(async (data: SignupData) => {
     try {

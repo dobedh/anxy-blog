@@ -132,6 +132,20 @@ export async function createUser(data: CreateUserData): Promise<{ success: boole
 // 사용자 정보 업데이트
 export async function updateUser(userId: string, updates: UpdateUserData): Promise<{ success: boolean; user?: User; error?: string }> {
   try {
+    // 사용자명 유효성 검사 및 중복 체크 (업데이트 시에만)
+    if (updates.username) {
+      const usernameValidation = validateUsername(updates.username);
+      if (!usernameValidation.isValid) {
+        return { success: false, error: usernameValidation.error };
+      }
+
+      // 중복 체크
+      const isAvailable = await checkUsernameAvailability(updates.username);
+      if (!isAvailable) {
+        return { success: false, error: '이미 사용 중인 사용자명입니다.' };
+      }
+    }
+
     // 표시명 유효성 검사 (업데이트 시에만)
     if (updates.displayName) {
       const displayNameValidation = validateDisplayName(updates.displayName);
@@ -142,6 +156,7 @@ export async function updateUser(userId: string, updates: UpdateUserData): Promi
 
     // 업데이트 데이터 준비
     const updateData: any = {};
+    if (updates.username) updateData.username = updates.username;
     if (updates.displayName) updateData.display_name = updates.displayName;
     if (updates.bio !== undefined) updateData.bio = updates.bio;
     if (updates.avatar) updateData.avatar_url = updates.avatar;
@@ -326,5 +341,32 @@ export async function getCurrentUser(): Promise<User | null> {
   } catch (error) {
     console.error('Error getting current user:', error);
     return null;
+  }
+}
+
+// 이메일 형식 확인 함수
+export function isEmailFormat(input: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(input);
+}
+
+// 닉네임 존재 여부 확인 (로그인용)
+export async function checkUsernameExists(username: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('username', username)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error checking username exists:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error checking username exists:', error);
+    return false;
   }
 }

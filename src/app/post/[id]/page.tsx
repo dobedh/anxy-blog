@@ -10,6 +10,7 @@ import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate 
 import { useAuth } from '@/hooks/useAuth';
 import DropdownMenu from '@/components/ui/DropdownMenu';
 import FollowButton from '@/components/FollowButton';
+import { getUserById } from '@/utils/supabaseUserUtils';
 import { useRouter } from 'next/navigation';
 
 interface PostPageProps {
@@ -24,6 +25,7 @@ export default function PostPage({ params }: PostPageProps) {
   const [commentCount, setCommentCount] = useState(0);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [authorUsername, setAuthorUsername] = useState<string | null>(null);
 
   const { currentUser, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -52,6 +54,17 @@ export default function PostPage({ params }: PostPageProps) {
 
     loadPost();
   }, [postId]);
+
+  // 작성자 username 로드
+  useEffect(() => {
+    const loadAuthorUsername = async () => {
+      if (post?.authorId) {
+        const author = await getUserById(post.authorId);
+        setAuthorUsername(author?.username || null);
+      }
+    };
+    loadAuthorUsername();
+  }, [post?.authorId]);
 
   useEffect(() => {
     if (postId) {
@@ -203,7 +216,17 @@ export default function PostPage({ params }: PostPageProps) {
       <div className="flex items-center gap-4 mb-6">
         {/* Left section: Author + Follow button */}
         <div className="flex items-center gap-4">
-          <span className="text-lg font-medium text-gray-900">{post.author}</span>
+          {authorUsername ? (
+            <Link
+              href={`/u/${authorUsername}`}
+              className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-gentle cursor-pointer focus-ring rounded-md px-1 -mx-1"
+              aria-label={`${post.author}님의 프로필 보기`}
+            >
+              {post.author}
+            </Link>
+          ) : (
+            <span className="text-lg font-medium text-gray-900">{post.author}</span>
+          )}
           {post.authorId && (
             <FollowButton
               targetUserId={post.authorId}

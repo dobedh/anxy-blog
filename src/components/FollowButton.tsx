@@ -44,9 +44,7 @@ export default function FollowButton({
   if (currentUser.id === targetUserId) {
     return (
       <button
-        onClick={() => {
-          router.push(`/u/${targetUsername}/edit`);
-        }}
+        onClick={() => router.push('/profile/edit')}
         className="px-6 py-2 rounded-full font-medium bg-surface text-foreground border border-border hover:bg-subtle transition-gentle focus-ring"
       >
         프로필 수정
