@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useScrollEffect } from '@/hooks/useScrollEffect';
 
 interface WriteHeaderProps {
   onSave: () => void;
@@ -11,9 +12,10 @@ interface WriteHeaderProps {
 
 export default function WriteHeader({ onSave, isSubmitting, isSaved }: WriteHeaderProps) {
   const { currentUser } = useAuth();
+  const isScrolled = useScrollEffect(10);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white">
+    <header className={`fixed top-0 left-0 right-0 z-50 header-transition ${isScrolled ? 'header-transparent header-scrolled' : 'bg-white'}`}>
       <div className="h-16 flex items-center justify-center px-6 relative">
         {/* Left Side - Logo and Saved Status (moved towards center) */}
         <div className="absolute left-1/4 flex items-center gap-4">

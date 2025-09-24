@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useEffect, useRef } from 'react';
+import { useScrollEffect } from '@/hooks/useScrollEffect';
 
 export default function Header() {
   const { currentUser, isAuthenticated, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isScrolled = useScrollEffect(10);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,7 +59,7 @@ export default function Header() {
   }, [isMenuOpen]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+    <header className={`fixed top-0 left-0 right-0 z-50 header-transition ${isScrolled ? 'header-transparent header-scrolled' : 'bg-white'}`}>
       <div className="h-16 flex items-center justify-between">
         {/* Left Side - Hamburger, Logo, and Search */}
         <div className="flex items-center flex-1">
@@ -156,14 +158,14 @@ export default function Header() {
                           내 블로그
                         </Link>
                         <Link
-                          href="/library"
+                          href="/likes"
                           className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                           </svg>
-                          라이브러리
+                          좋아요 한 글
                         </Link>
                       </nav>
                     </div>
@@ -195,14 +197,14 @@ export default function Header() {
                           홈
                         </Link>
                         <Link
-                          href="/library"
+                          href="/likes"
                           className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                           </svg>
-                          라이브러리
+                          좋아요 한 글
                         </Link>
 
                         {/* Authentication Section */}

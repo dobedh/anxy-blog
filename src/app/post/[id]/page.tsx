@@ -4,7 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Post } from '@/types/post';
-import { getPostById, deletePost } from '@/utils/supabasePostUtils';
+import { getPostById, deletePost, togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
 import { Comment } from '@/types/comment';
 import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
 import { useAuth } from '@/hooks/useAuth';
@@ -26,6 +26,9 @@ export default function PostPage({ params }: PostPageProps) {
   const [commentInput, setCommentInput] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [authorUsername, setAuthorUsername] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [currentLikeCount, setCurrentLikeCount] = useState(0);
 
   const { currentUser, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -79,6 +82,28 @@ export default function PostPage({ params }: PostPageProps) {
     }
   }, [postId]);
 
+  // 좋아요 상태 및 카운트 초기화
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (post && isAuthenticated && currentUser) {
+        try {
+          const liked = await checkUserLikedPost(post.id, currentUser.id);
+          setIsLiked(liked);
+        } catch (error) {
+          console.error('Error checking like status:', error);
+          setIsLiked(false);
+        }
+      }
+
+      // 좋아요 카운트 초기화
+      if (post) {
+        setCurrentLikeCount(post.likes);
+      }
+    };
+
+    checkLikeStatus();
+  }, [post, isAuthenticated, currentUser]);
+
 
   const handleDeletePost = async () => {
     if (!post || !currentUser) return;
@@ -131,6 +156,31 @@ export default function PostPage({ params }: PostPageProps) {
         console.error('Copy to clipboard error:', error);
         alert('링크 복사 중 오류가 발생했습니다.');
       }
+    }
+  };
+
+  const handleLike = async () => {
+    if (!isAuthenticated || !currentUser || !post) {
+      // TODO: Show login prompt or redirect to login
+      return;
+    }
+
+    if (isLikeLoading) return;
+
+    setIsLikeLoading(true);
+    try {
+      const result = await togglePostLike(post.id, currentUser.id);
+      if (result.success) {
+        setIsLiked(result.liked);
+        // 좋아요 카운트 업데이트 (실제 카운트 반영)
+        setCurrentLikeCount(prev => result.liked ? prev + 1 : prev - 1);
+      } else {
+        console.error('Error toggling like:', result.error);
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    } finally {
+      setIsLikeLoading(false);
     }
   };
 
@@ -227,7 +277,7 @@ export default function PostPage({ params }: PostPageProps) {
           ) : (
             <span className="text-lg font-medium text-gray-900">{post.author}</span>
           )}
-          {post.authorId && (
+          {post.authorId && !isOwner && (
             <FollowButton
               targetUserId={post.authorId}
               targetUsername={post.author}
@@ -271,11 +321,25 @@ export default function PostPage({ params }: PostPageProps) {
       {/* 5. Like and comment actions - redesigned */}
       <div className="flex items-center gap-4 mb-8">
         {/* Like button */}
-        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button
+          onClick={handleLike}
+          disabled={isLikeLoading || !isAuthenticated}
+          className={`flex items-center justify-center gap-2 px-4 py-2 bg-white border rounded-full text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            isLiked
+              ? 'border-red-300 text-red-600 hover:bg-red-50'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+          }`}
+          aria-label={isLiked ? "Unlike" : "Like"}
+        >
+          <svg
+            className={`w-4 h-4 ${isLiked ? 'text-red-500 fill-current' : 'text-gray-700'}`}
+            fill={isLiked ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-          <span>{post.likes}</span>
+          <span>{currentLikeCount}</span>
         </button>
 
         {/* Comment button */}

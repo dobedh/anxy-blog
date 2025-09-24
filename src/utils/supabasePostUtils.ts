@@ -348,17 +348,19 @@ export async function getPostsByAuthor(
 export async function togglePostLike(postId: string, userId: string): Promise<{ success: boolean; liked: boolean; error?: string }> {
   try {
     // 현재 좋아요 상태 확인
-    const { data: existingLike, error: checkError } = await supabase
+    const { data: existingLikes, error: checkError } = await supabase
       .from('post_likes')
       .select('id')
       .eq('user_id', userId)
       .eq('post_id', postId)
-      .single();
+      .limit(1);
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError) {
       console.error('Error checking like status:', checkError);
       return { success: false, liked: false, error: '좋아요 상태 확인에 실패했습니다.' };
     }
+
+    const existingLike = existingLikes && existingLikes.length > 0 ? existingLikes[0] : null;
 
     if (existingLike) {
       // 좋아요 취소
@@ -403,17 +405,73 @@ export async function checkUserLikedPost(postId: string, userId: string): Promis
       .select('id')
       .eq('user_id', userId)
       .eq('post_id', postId)
-      .single();
+      .limit(1);
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error checking user like status:', error);
       return false;
     }
 
-    return !!data;
+    return data && data.length > 0;
   } catch (error) {
     console.error('Error checking if user liked post:', error);
     return false;
+  }
+}
+
+// 사용자가 좋아요한 글 목록 조회
+export async function getUserLikedPosts(
+  userId: string,
+  offset: number = 0,
+  limit: number = 20
+): Promise<{ posts: Post[]; total: number; error?: string }> {
+  try {
+    // 사용자가 좋아요한 글 ID 목록을 먼저 조회
+    const { data: likedPostIds, error: likesError, count } = await supabase
+      .from('post_likes')
+      .select('post_id', { count: 'exact' })
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (likesError) {
+      console.error('Error fetching liked post IDs:', likesError);
+      return { posts: [], total: 0, error: '좋아요한 글 목록을 불러올 수 없습니다.' };
+    }
+
+    if (!likedPostIds || likedPostIds.length === 0) {
+      return { posts: [], total: count || 0 };
+    }
+
+    // 좋아요한 글의 상세 정보 조회
+    const postIds = likedPostIds.map(like => like.post_id);
+
+    const { data: posts, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .in('id', postIds)
+      .eq('is_private', false) // 공개 글만 조회
+      .order('created_at', { ascending: false });
+
+    if (postsError) {
+      console.error('Error fetching liked posts:', postsError);
+      return { posts: [], total: 0, error: '좋아요한 글을 불러올 수 없습니다.' };
+    }
+
+    // 좋아요한 순서대로 정렬 (post_likes 테이블의 순서를 따름)
+    const sortedPosts = likedPostIds.map(like =>
+      posts?.find(post => post.id === like.post_id)
+    ).filter(Boolean);
+
+    const convertedPosts = sortedPosts.map(post => convertSupabasePostToPost(post));
+
+    return {
+      posts: convertedPosts,
+      total: count || 0
+    };
+  } catch (error) {
+    console.error('Error getting user liked posts:', error);
+    return { posts: [], total: 0, error: '좋아요한 글 조회 중 오류가 발생했습니다.' };
   }
 }
 
