@@ -42,7 +42,7 @@ export function useAuth(): UseAuthReturn {
         setUserLoading(true);
         try {
           const supabase = getSupabaseClient();
-          const { data: profile, error } = await supabase
+          const { data: profile, error } = await supabase()
             .from('profiles')
             .select('*')
             .eq('id', user.id)

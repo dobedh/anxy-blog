@@ -70,7 +70,7 @@ export async function migrateLocalStorageToSupabase(): Promise<MigrationResult> 
 
   try {
     // 1. 현재 사용자 확인
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const { data: { user: currentUser } } = await supabase().auth.getUser();
     if (!currentUser) {
       result.errors.push('로그인이 필요합니다.');
       return result;
@@ -118,14 +118,14 @@ export async function migrateLocalStorageToSupabase(): Promise<MigrationResult> 
         const supabasePost = convertLegacyPostToSupabase(legacyPost, authorMapping);
 
         // 이미 존재하는지 확인
-        const { data: existingPost } = await supabase
+        const { data: existingPost } = await supabase()
           .from('posts')
           .select('id')
           .eq('id', supabasePost.id)
           .single();
 
         if (!existingPost) {
-          const { error } = await supabase
+          const { error } = await supabase()
             .from('posts')
             .insert(supabasePost);
 

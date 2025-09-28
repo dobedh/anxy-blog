@@ -17,9 +17,9 @@ export function useSupabaseAuth() {
   })
 
   useEffect(() => {
-    // 현재 세션 가져오기
+    // 현재 세션 가져기기
     const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
+      const { data: { session }, error } = await supabase().auth.getSession()
       if (error) {
         console.error('Error getting session:', error)
       }
@@ -33,7 +33,7 @@ export function useSupabaseAuth() {
     getSession()
 
     // 인증 상태 변화 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase().auth.onAuthStateChange(
       (event, session) => {
         setAuthState({
           user: session?.user ?? null,
@@ -53,7 +53,7 @@ export function useSupabaseAuth() {
     bio?: string
   }) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase().auth.signUp({
         email,
         password,
         options: {
@@ -65,7 +65,7 @@ export function useSupabaseAuth() {
 
       // 프로필 생성
       if (data.user) {
-        const { error: profileError } = await supabase
+        const { error: profileError } = await supabase()
           .from('profiles')
           .insert({
             id: data.user.id,
@@ -87,7 +87,7 @@ export function useSupabaseAuth() {
   // 이메일/비밀번호 로그인
   const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase().auth.signInWithPassword({
         email,
         password
       })
@@ -137,7 +137,7 @@ export function useSupabaseAuth() {
   // 구글 OAuth 로그인
   const signInWithGoogle = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase().auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`
@@ -173,7 +173,7 @@ export function useSupabaseAuth() {
   // 로그아웃
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
+      const { error } = await supabase().auth.signOut()
       if (error) throw error
       return { error: null }
     } catch (error) {
@@ -185,7 +185,7 @@ export function useSupabaseAuth() {
   // 사용자명 중복 체크
   const checkUsernameAvailability = async (username: string) => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabase()
         .from('profiles')
         .select('username')
         .eq('username', username)

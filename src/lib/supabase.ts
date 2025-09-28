@@ -67,24 +67,8 @@ export const createCallbackClient = (): SupabaseClient => {
   return getSupabaseClient()
 }
 
-// Direct client initialization with try-catch
-let clientInstance: SupabaseClient | null = null
-
-export const supabase = (() => {
-  if (!clientInstance) {
-    try {
-      clientInstance = getSupabaseClient()
-    } catch (error) {
-      console.error('Failed to initialize supabase client:', error)
-      // Return a minimal mock client for development
-      clientInstance = {
-        auth: {},
-        from: () => ({ select: () => Promise.resolve({ data: [], error: null }) }),
-      } as any
-    }
-  }
-  return clientInstance
-})()
+// Lazy initialization - no immediate execution
+export const supabase = getSupabaseClient
 
 // 타입 정의
 export type Database = {

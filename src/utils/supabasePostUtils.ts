@@ -96,7 +96,7 @@ export async function createPost(
     };
 
     // DB에 저장
-    const { data: newPost, error } = await supabase
+    const { data: newPost, error } = await supabase()
       .from('posts')
       .insert(postData)
       .select()
@@ -122,7 +122,7 @@ export async function updatePost(
 ): Promise<{ success: boolean; post?: Post; error?: string }> {
   try {
     // 기존 글 조회
-    const { data: existingPost, error: fetchError } = await supabase
+    const { data: existingPost, error: fetchError } = await supabase()
       .from('posts')
       .select('*')
       .eq('id', postId)
@@ -160,7 +160,7 @@ export async function updatePost(
     if (updates.isPrivate !== undefined) updateData.is_private = updates.isPrivate;
 
     // 업데이트 실행
-    const { data: updatedPost, error } = await supabase
+    const { data: updatedPost, error } = await supabase()
       .from('posts')
       .update(updateData)
       .eq('id', postId)
@@ -183,7 +183,7 @@ export async function updatePost(
 export async function deletePost(postId: string, authorId: string): Promise<{ success: boolean; error?: string }> {
   try {
     // 기존 글 조회
-    const { data: existingPost, error: fetchError } = await supabase
+    const { data: existingPost, error: fetchError } = await supabase()
       .from('posts')
       .select('author_id')
       .eq('id', postId)
@@ -200,7 +200,7 @@ export async function deletePost(postId: string, authorId: string): Promise<{ su
     }
 
     // 삭제 실행
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('posts')
       .delete()
       .eq('id', postId);
@@ -289,7 +289,7 @@ export async function getPosts(
 // ID로 글 조회
 export async function getPostById(postId: string): Promise<Post | undefined> {
   try {
-    const { data: post, error } = await supabase
+    const { data: post, error } = await supabase()
       .from('posts')
       .select('*')
       .eq('id', postId)
@@ -312,7 +312,7 @@ export async function getPostById(postId: string): Promise<Post | undefined> {
 // 사용자별 글 개수
 export async function getPostCountByAuthor(authorId: string): Promise<number> {
   try {
-    const { count, error } = await supabase
+    const { count, error } = await supabase()
       .from('posts')
       .select('id', { count: 'exact' })
       .eq('author_id', authorId)
@@ -348,7 +348,7 @@ export async function getPostsByAuthor(
 export async function togglePostLike(postId: string, userId: string): Promise<{ success: boolean; liked: boolean; error?: string }> {
   try {
     // 현재 좋아요 상태 확인
-    const { data: existingLikes, error: checkError } = await supabase
+    const { data: existingLikes, error: checkError } = await supabase()
       .from('post_likes')
       .select('id')
       .eq('user_id', userId)
@@ -364,7 +364,7 @@ export async function togglePostLike(postId: string, userId: string): Promise<{ 
 
     if (existingLike) {
       // 좋아요 취소
-      const { error } = await supabase
+      const { error } = await supabase()
         .from('post_likes')
         .delete()
         .eq('id', existingLike.id);
@@ -377,7 +377,7 @@ export async function togglePostLike(postId: string, userId: string): Promise<{ 
       return { success: true, liked: false };
     } else {
       // 좋아요 추가
-      const { error } = await supabase
+      const { error } = await supabase()
         .from('post_likes')
         .insert({
           user_id: userId,
@@ -400,7 +400,7 @@ export async function togglePostLike(postId: string, userId: string): Promise<{ 
 // 사용자가 특정 글에 좋아요를 눌렀는지 확인
 export async function checkUserLikedPost(postId: string, userId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('post_likes')
       .select('id')
       .eq('user_id', userId)
@@ -427,7 +427,7 @@ export async function getUserLikedPosts(
 ): Promise<{ posts: Post[]; total: number; error?: string }> {
   try {
     // 사용자가 좋아요한 글 ID 목록을 먼저 조회
-    const { data: likedPostIds, error: likesError, count } = await supabase
+    const { data: likedPostIds, error: likesError, count } = await supabase()
       .from('post_likes')
       .select('post_id', { count: 'exact' })
       .eq('user_id', userId)
@@ -446,7 +446,7 @@ export async function getUserLikedPosts(
     // 좋아요한 글의 상세 정보 조회
     const postIds = likedPostIds.map(like => like.post_id);
 
-    const { data: posts, error: postsError } = await supabase
+    const { data: posts, error: postsError } = await supabase()
       .from('posts')
       .select('*')
       .in('id', postIds)

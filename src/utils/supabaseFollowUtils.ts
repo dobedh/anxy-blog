@@ -23,7 +23,7 @@ export async function followUser(followerId: string, followingId: string): Promi
     }
 
     // 이미 팔로우하고 있는지 확인
-    const { data: existingFollow, error: checkError } = await supabase
+    const { data: existingFollow, error: checkError } = await supabase()
       .from('follows')
       .select('id')
       .eq('follower_id', followerId)
@@ -40,7 +40,7 @@ export async function followUser(followerId: string, followingId: string): Promi
     }
 
     // 팔로우 관계 생성
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('follows')
       .insert({
         follower_id: followerId,
@@ -62,7 +62,7 @@ export async function followUser(followerId: string, followingId: string): Promi
 // 언팔로우
 export async function unfollowUser(followerId: string, followingId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('follows')
       .delete()
       .eq('follower_id', followerId)
@@ -83,7 +83,7 @@ export async function unfollowUser(followerId: string, followingId: string): Pro
 // 팔로우 상태 확인
 export async function checkFollowStatus(followerId: string, followingId: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('follows')
       .select('id')
       .eq('follower_id', followerId)
@@ -140,7 +140,7 @@ export async function getFollowers(
 ): Promise<{ followers: User[]; total: number }> {
   try {
     // 팔로워 ID 목록 조회
-    const { data: followData, error: followError, count } = await supabase
+    const { data: followData, error: followError, count } = await supabase()
       .from('follows')
       .select('follower_id', { count: 'exact' })
       .eq('following_id', userId)
@@ -157,7 +157,7 @@ export async function getFollowers(
 
     // 팔로워 프로필 정보 조회
     const followerIds = followData.map(f => f.follower_id);
-    const { data: profiles, error: profileError } = await supabase
+    const { data: profiles, error: profileError } = await supabase()
       .from('profiles')
       .select('*')
       .in('id', followerIds)
@@ -197,7 +197,7 @@ export async function getFollowing(
 ): Promise<{ following: User[]; total: number }> {
   try {
     // 팔로잉 ID 목록 조회
-    const { data: followData, error: followError, count } = await supabase
+    const { data: followData, error: followError, count } = await supabase()
       .from('follows')
       .select('following_id', { count: 'exact' })
       .eq('follower_id', userId)
@@ -214,7 +214,7 @@ export async function getFollowing(
 
     // 팔로잉 프로필 정보 조회
     const followingIds = followData.map(f => f.following_id);
-    const { data: profiles, error: profileError } = await supabase
+    const { data: profiles, error: profileError } = await supabase()
       .from('profiles')
       .select('*')
       .in('id', followingIds)
@@ -249,7 +249,7 @@ export async function getFollowing(
 // 팔로워 수 조회
 export async function getFollowerCount(userId: string): Promise<number> {
   try {
-    const { count, error } = await supabase
+    const { count, error } = await supabase()
       .from('follows')
       .select('id', { count: 'exact' })
       .eq('following_id', userId);
@@ -269,7 +269,7 @@ export async function getFollowerCount(userId: string): Promise<number> {
 // 팔로잉 수 조회
 export async function getFollowingCount(userId: string): Promise<number> {
   try {
-    const { count, error } = await supabase
+    const { count, error } = await supabase()
       .from('follows')
       .select('id', { count: 'exact' })
       .eq('follower_id', userId);
@@ -309,7 +309,7 @@ export async function getFollowingFeed(
 ) {
   try {
     // 팔로잉하는 사용자 ID 목록 조회
-    const { data: followingData, error: followingError } = await supabase
+    const { data: followingData, error: followingError } = await supabase()
       .from('follows')
       .select('following_id')
       .eq('follower_id', userId);
@@ -326,7 +326,7 @@ export async function getFollowingFeed(
     const followingIds = followingData.map(f => f.following_id);
 
     // 팔로잉한 사용자들의 글 조회
-    const { data: posts, error: postsError } = await supabase
+    const { data: posts, error: postsError } = await supabase()
       .from('posts')
       .select('*')
       .in('author_id', followingIds)

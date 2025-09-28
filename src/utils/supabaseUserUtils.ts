@@ -53,7 +53,7 @@ export function validateDisplayName(displayName: string): { isValid: boolean; er
 // 사용자명 중복 체크
 export async function checkUsernameAvailability(username: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('profiles')
       .select('username')
       .eq('username', username)
@@ -98,13 +98,13 @@ export async function createUser(data: CreateUserData): Promise<{ success: boole
     }
 
     // 현재 사용자 확인
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const { data: { user: currentUser } } = await supabase().auth.getUser();
     if (!currentUser) {
       return { success: false, error: '인증되지 않은 사용자입니다.' };
     }
 
     // 프로필 생성
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await supabase()
       .from('profiles')
       .insert({
         id: currentUser.id,
@@ -166,7 +166,7 @@ export async function updateUser(userId: string, updates: UpdateUserData): Promi
     updateData.updated_at = new Date().toISOString();
 
     // 업데이트 실행
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await supabase()
       .from('profiles')
       .update(updateData)
       .eq('id', userId)
@@ -188,7 +188,7 @@ export async function updateUser(userId: string, updates: UpdateUserData): Promi
 // 사용자 삭제
 export async function deleteUser(userId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase
+    const { error } = await supabase()
       .from('profiles')
       .delete()
       .eq('id', userId);
@@ -208,7 +208,7 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
 // ID로 사용자 조회
 export async function getUserById(userId: string): Promise<User | undefined> {
   try {
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await supabase()
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -231,7 +231,7 @@ export async function getUserById(userId: string): Promise<User | undefined> {
 // 사용자명으로 사용자 조회
 export async function getUserByUsername(username: string): Promise<User | undefined> {
   try {
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await supabase()
       .from('profiles')
       .select('*')
       .eq('username', username)
@@ -331,7 +331,7 @@ export async function getUsers(
 // 현재 로그인한 사용자 정보 조회
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase().auth.getUser();
 
     if (!user) {
       return null;
@@ -353,7 +353,7 @@ export function isEmailFormat(input: string): boolean {
 // 닉네임 존재 여부 확인 (로그인용)
 export async function checkUsernameExists(username: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabase()
       .from('profiles')
       .select('username')
       .eq('username', username)
