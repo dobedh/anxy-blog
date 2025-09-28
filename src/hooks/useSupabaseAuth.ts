@@ -17,17 +17,34 @@ export function useSupabaseAuth() {
   })
 
   useEffect(() => {
+    // 클라이언트 사이드에서만 실행
+    if (typeof window === 'undefined') {
+      console.log('⏳ Server-side render, skipping auth initialization');
+      return;
+    }
+
     // 현재 세션 가져기기
     const getSession = async () => {
-      const { data: { session }, error } = await supabase().auth.getSession()
-      if (error) {
-        console.error('Error getting session:', error)
+      try {
+        console.log('🔄 Getting current session...');
+        const { data: { session }, error } = await supabase().auth.getSession()
+        if (error) {
+          console.error('Error getting session:', error)
+        }
+        console.log('✅ Session retrieved:', session ? 'authenticated' : 'not authenticated');
+        setAuthState({
+          user: session?.user ?? null,
+          session,
+          loading: false
+        })
+      } catch (error) {
+        console.error('Error in getSession:', error);
+        setAuthState({
+          user: null,
+          session: null,
+          loading: false
+        })
       }
-      setAuthState({
-        user: session?.user ?? null,
-        session,
-        loading: false
-      })
     }
 
     getSession()
@@ -35,6 +52,7 @@ export function useSupabaseAuth() {
     // 인증 상태 변화 리스너
     const { data: { subscription } } = supabase().auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔄 Auth state changed:', event, session ? 'authenticated' : 'not authenticated');
         setAuthState({
           user: session?.user ?? null,
           session,

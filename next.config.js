@@ -17,7 +17,12 @@ const nextConfig = {
   typescript: {
     // 배포 시 TypeScript 오류 무시
     ignoreBuildErrors: true,
-  }
+  },
+  env: {
+    // Ensure environment variables are available
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  },
 };
 
 module.exports = nextConfig;

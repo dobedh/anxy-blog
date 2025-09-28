@@ -173,26 +173,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* 구분선 */}
-        <div className="mt-8 flex items-center">
-          <div className="flex-1 border-t border-accent"></div>
-          <span className="px-4 text-sm text-muted">또는</span>
-          <div className="flex-1 border-t border-accent"></div>
-        </div>
-
-        {/* OAuth 로그인 버튼들 - 임시 비활성화 */}
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 text-center">
-            소셜 로그인은 곧 제공될 예정입니다.<br/>
-            현재는 이메일 회원가입을 이용해주세요.
-          </p>
-        </div>
 
         {/* 회원가입 링크 */}
         <div className="mt-8 text-center">
-          <p className="text-body text-muted mb-4">
-            아직 계정이 없으신가요?
-          </p>
           <Link
             href="/signup"
             className="inline-block bg-accent text-primary px-6 py-3 rounded-lg text-body font-medium hover:bg-border transition-gentle focus-ring"
@@ -202,29 +185,6 @@ export default function LoginPage() {
           </Link>
         </div>
 
-        {/* 개발용 도우미 정보 */}
-        <div className="mt-12 p-6 bg-subtle rounded-lg border border-accent">
-          <h3 className="text-caption font-semibold text-foreground mb-3">
-            💡 이제 Supabase 사용
-          </h3>
-          <div className="text-sm text-muted space-y-2">
-            <p>이제 실제 이메일과 비밀번호로 회원가입/로그인할 수 있습니다.</p>
-            <p>구글 또는 카카오 계정으로도 간편하게 로그인하세요.</p>
-            <p className="text-xs pt-2 border-t border-accent">
-              * 기존 localStorage 데이터는 로그인 후 마이그레이션할 수 있습니다
-            </p>
-          </div>
-        </div>
-
-        {/* 홈으로 돌아가기 */}
-        <div className="mt-6 text-center">
-          <Link
-            href="/"
-            className="text-muted hover:text-primary transition-gentle focus-ring rounded-lg px-3 py-2"
-          >
-            ← 홈으로 돌아가기
-          </Link>
-        </div>
       </div>
     </div>
   );

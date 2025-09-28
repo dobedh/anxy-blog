@@ -3,45 +3,25 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 // Supabase instance cache
 let supabaseInstance: SupabaseClient | null = null
 
-// Development fallback values (hardcoded for reliability)
-const DEVELOPMENT_CONFIG = {
-  url: 'https://izijmvvdtabhohdaoyzl.supabase.co',
-  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6aWptdnZkdGFiaG9oZGFveXpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyODgwNTYsImV4cCI6MjA3Mzg2NDA1Nn0.DxyiKMEw-k4hzRAU5B86_HsVGynqLKkLzLlordWyJJk'
-}
-
-// Robust environment variable getter
+// 환경변수에서 Supabase 설정 가져오기 (하드코딩 완전 제거)
 const getSupabaseConfig = () => {
-  // Try to get from environment variables first
-  let url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  let key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Check for empty strings, undefined, or null
+  // 환경변수 엄격한 검증
   if (!url || url.trim() === '' || url === 'undefined') {
-    console.warn('NEXT_PUBLIC_SUPABASE_URL not found, using development fallback')
-    url = DEVELOPMENT_CONFIG.url
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required. Please set it in your environment variables.')
   }
 
   if (!key || key.trim() === '' || key === 'undefined') {
-    console.warn('NEXT_PUBLIC_SUPABASE_ANON_KEY not found, using development fallback')
-    key = DEVELOPMENT_CONFIG.key
+    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please set it in your environment variables.')
   }
 
-  // Final validation
-  if (!url || !key) {
-    console.error('Supabase configuration failed:', { url: !!url, key: !!key })
-    throw new Error('Supabase configuration is required and could not be resolved.')
-  }
-
-  console.log('Supabase config loaded:', {
-    url: url.substring(0, 30) + '...',
-    keyLength: key.length,
-    source: url === DEVELOPMENT_CONFIG.url ? 'fallback' : 'env'
-  })
-
+  console.log('✅ Supabase config loaded from environment variables')
   return { url, key }
 }
 
-// Simplified Supabase client getter
+// Supabase 클라이언트 생성 함수 (완전한 lazy initialization)
 export const getSupabaseClient = (): SupabaseClient => {
   if (!supabaseInstance) {
     try {
@@ -67,7 +47,7 @@ export const createCallbackClient = (): SupabaseClient => {
   return getSupabaseClient()
 }
 
-// Lazy initialization - no immediate execution
+// 함수 참조만 내보내기 (즉시 실행 완전 방지)
 export const supabase = getSupabaseClient
 
 // 타입 정의

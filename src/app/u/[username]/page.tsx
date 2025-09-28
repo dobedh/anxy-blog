@@ -26,42 +26,66 @@ export default function UserPage({ params }: UserPageProps) {
     type: 'followers' | 'following' | null;
   }>({ isOpen: false, type: null });
 
-  const username = use(params).username;
+  const resolvedParams = use(params);
+  const username = resolvedParams?.username;
 
   useEffect(() => {
     const loadUserData = async () => {
+      if (!username) {
+        console.log('Username is undefined, cannot load user data');
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
 
       console.log('Loading user data for username:', username);
 
-      // Get user data
-      const userData = await getUserByUsername(username);
+      try {
+        // Get user data
+        const userData = await getUserByUsername(username);
 
-      if (!userData) {
-        console.log('User not found:', username);
-        notFound();
-        return;
+        if (!userData) {
+          console.log('User not found:', username);
+          notFound();
+          return;
+        }
+
+        console.log('User found:', userData);
+        setUser(userData);
+
+        // Get user's posts
+        const userPosts = await getPostsByAuthor(userData.id);
+        console.log('User posts:', userPosts);
+        setPosts(userPosts);
+
+        // Get follower/following counts
+        const followers = await getFollowerCount(userData.id);
+        const following = await getFollowingCount(userData.id);
+        setFollowerCount(followers);
+        setFollowingCount(following);
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setIsLoading(false);
+        // Optional: show error state or redirect
       }
-
-      console.log('User found:', userData);
-      setUser(userData);
-
-      // Get user's posts
-      const userPosts = await getPostsByAuthor(userData.id);
-      console.log('User posts:', userPosts);
-      setPosts(userPosts);
-
-      // Get follower/following counts
-      const followers = await getFollowerCount(userData.id);
-      const following = await getFollowingCount(userData.id);
-      setFollowerCount(followers);
-      setFollowingCount(following);
-
-      setIsLoading(false);
     };
 
     loadUserData();
   }, [username]);
+
+  // Handle undefined username early
+  if (!username) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-muted">잘못된 사용자 경로입니다.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -225,7 +225,7 @@ export async function getPosts(
   limit: number = 20
 ): Promise<Post[]> {
   try {
-    let query = supabase
+    let query = supabase()
       .from('posts')
       .select('*');
 

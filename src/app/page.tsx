@@ -14,13 +14,25 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
 
   const loadPosts = async () => {
-    // Supabase에서 글 가져오기
-    const userPosts = await getPosts({}, 'newest');
-    setAllPosts(userPosts);
+    try {
+      // 클라이언트 사이드에서만 실행
+      if (typeof window === 'undefined') return;
+
+      console.log('🔄 Loading posts from Supabase...');
+      const userPosts = await getPosts({}, 'newest');
+      console.log('✅ Posts loaded successfully:', userPosts.length);
+      setAllPosts(userPosts);
+    } catch (error) {
+      console.error('❌ Error loading posts:', error);
+      setAllPosts([]); // 에러 시 빈 배열 설정
+    }
   };
 
   useEffect(() => {
-    loadPosts();
+    // 클라이언트 사이드에서만 실행
+    if (typeof window !== 'undefined') {
+      loadPosts();
+    }
   }, [pathname]); // pathname이 변경될 때마다 새로 로드
 
   return (

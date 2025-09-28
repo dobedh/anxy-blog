@@ -29,9 +29,15 @@ export function useAuth(): UseAuthReturn {
   const [userLoading, setUserLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
-  // Supabase User를 AuthUser로 변환 (최적화된 버전)
+  // Supabase User를 AuthUser로 변환 (완전한 클라이언트 사이드 실행)
   useEffect(() => {
     const convertUser = async () => {
+      // 클라이언트 사이드에서만 실행
+      if (typeof window === 'undefined') {
+        console.log('⏳ Server-side render, skipping user conversion');
+        return;
+      }
+
       // 인증 로딩이 완료되기 전까지는 처리하지 않음
       if (loading) {
         setIsReady(false);
@@ -41,8 +47,9 @@ export function useAuth(): UseAuthReturn {
       if (user) {
         setUserLoading(true);
         try {
-          const supabase = getSupabaseClient();
-          const { data: profile, error } = await supabase()
+          console.log('🔄 Converting user profile...');
+          const supabaseClient = getSupabaseClient();
+          const { data: profile, error } = await supabaseClient
             .from('profiles')
             .select('*')
             .eq('id', user.id)
