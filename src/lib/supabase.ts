@@ -8,13 +8,35 @@ const getSupabaseConfig = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+  // 디버깅 정보 추가
+  console.log('🔍 Environment variable check:', {
+    url_exists: !!url,
+    url_type: typeof url,
+    url_value: url ? `${url.substring(0, 20)}...` : 'undefined',
+    key_exists: !!key,
+    key_type: typeof key,
+    key_length: key ? key.length : 0,
+    is_browser: typeof window !== 'undefined',
+    node_env: process.env.NODE_ENV
+  })
+
   // 환경변수 엄격한 검증
   if (!url || url.trim() === '' || url === 'undefined') {
-    throw new Error('NEXT_PUBLIC_SUPABASE_URL is required. Please set it in your environment variables.')
+    console.error('❌ NEXT_PUBLIC_SUPABASE_URL missing or invalid:', {
+      value: url,
+      type: typeof url,
+      all_env_keys: Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_'))
+    })
+    throw new Error(`NEXT_PUBLIC_SUPABASE_URL is required. Please set it in your environment variables. Current value: ${url}`)
   }
 
   if (!key || key.trim() === '' || key === 'undefined') {
-    throw new Error('NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please set it in your environment variables.')
+    console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY missing or invalid:', {
+      value: key ? `${key.substring(0, 10)}...` : key,
+      type: typeof key,
+      length: key ? key.length : 0
+    })
+    throw new Error(`NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please set it in your environment variables. Current value: ${key ? 'present but invalid' : 'missing'}`)
   }
 
   console.log('✅ Supabase config loaded from environment variables')
