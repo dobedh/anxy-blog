@@ -152,23 +152,23 @@ export function useSupabaseAuth() {
     }
   }
 
-  // 카카오 OAuth 로그인 (네이버 대신 카카오 사용 - Supabase에서 더 쉽게 지원)
-  const signInWithKakao = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'kakao',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      })
+  // TODO: 카카오 OAuth 로그인 - 추후 업데이트 예정
+  // const signInWithKakao = async () => {
+  //   try {
+  //     const { data, error } = await supabase.auth.signInWithOAuth({
+  //       provider: 'kakao',
+  //       options: {
+  //         redirectTo: `${window.location.origin}/auth/callback`
+  //       }
+  //     })
 
-      if (error) throw error
-      return { data, error: null }
-    } catch (error) {
-      console.error('Error signing in with Kakao:', error)
-      return { data: null, error }
-    }
-  }
+  //     if (error) throw error
+  //     return { data, error: null }
+  //   } catch (error) {
+  //     console.error('Error signing in with Kakao:', error)
+  //     return { data: null, error }
+  //   }
+  // }
 
   // 로그아웃
   const signOut = async () => {
@@ -209,7 +209,7 @@ export function useSupabaseAuth() {
     signIn,
     signInWithEmailOrUsername,
     signInWithGoogle,
-    signInWithKakao,
+    // signInWithKakao, // TODO: 추후 업데이트 예정
     signOut,
     checkUsernameAvailability
   }

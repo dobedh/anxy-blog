@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSupabaseAuth } from './useSupabaseAuth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/lib/supabase';
 import { LoginCredentials, SignupData, AuthUser, OAuthSignupData } from '@/types/user';
 
 interface UseAuthReturn {
@@ -16,24 +16,32 @@ interface UseAuthReturn {
 
   // OAuth 액션
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
-  signInWithKakao: () => Promise<{ success: boolean; error?: string }>;
+  // signInWithKakao: () => Promise<{ success: boolean; error?: string }>; // TODO: 추후 업데이트 예정
 
   // 유틸리티
   isCurrentUser: (userId: string) => boolean;
-  checkUsernameAvailability: (username: string) => Promise<{ available: boolean; error?: any }>;
+  checkUsernameAvailability: (username: string) => Promise<{ available: boolean; error?: unknown }>;
 }
 
 export function useAuth(): UseAuthReturn {
-  const { user, loading, signIn, signInWithEmailOrUsername, signUp, signOut, signInWithGoogle, signInWithKakao, checkUsernameAvailability } = useSupabaseAuth();
+  const { user, loading, signIn, signInWithEmailOrUsername, signUp, signOut, signInWithGoogle, /* signInWithKakao, */ checkUsernameAvailability } = useSupabaseAuth();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [userLoading, setUserLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
-  // Supabase User를 AuthUser로 변환
+  // Supabase User를 AuthUser로 변환 (최적화된 버전)
   useEffect(() => {
     const convertUser = async () => {
+      // 인증 로딩이 완료되기 전까지는 처리하지 않음
+      if (loading) {
+        setIsReady(false);
+        return;
+      }
+
       if (user) {
         setUserLoading(true);
         try {
+          const supabase = getSupabaseClient();
           const { data: profile, error } = await supabase
             .from('profiles')
             .select('*')
@@ -42,32 +50,45 @@ export function useAuth(): UseAuthReturn {
 
           if (error) {
             console.error('Error fetching profile:', error);
-            setCurrentUser(null);
-            setUserLoading(false);
-            return;
+            // 프로필이 없을 경우 기본 사용자 정보로 설정
+            if (error.code === 'PGRST116') {
+              console.log('Profile not found, creating minimal user object');
+              setCurrentUser({
+                id: user.id,
+                username: user.email?.split('@')[0] || 'unknown',
+                displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
+                email: user.email,
+                avatarUrl: user.user_metadata?.avatar_url || null
+              });
+            } else {
+              setCurrentUser(null);
+            }
+          } else {
+            setCurrentUser({
+              id: user.id,
+              username: profile.username,
+              displayName: profile.display_name,
+              email: user.email,
+              avatarUrl: profile.avatar_url
+            });
           }
-
-          setCurrentUser({
-            id: user.id,
-            username: profile.username,
-            displayName: profile.display_name,
-            email: user.email,
-            avatarUrl: profile.avatar_url
-          });
-          setUserLoading(false);
         } catch (error) {
           console.error('Error converting user:', error);
           setCurrentUser(null);
+        } finally {
           setUserLoading(false);
+          setIsReady(true);
         }
       } else {
+        // 사용자가 없으면 즉시 상태 정리
         setCurrentUser(null);
         setUserLoading(false);
+        setIsReady(true);
       }
     };
 
     convertUser();
-  }, [user]);
+  }, [user, loading]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
@@ -141,30 +162,31 @@ export function useAuth(): UseAuthReturn {
     }
   }, [signInWithGoogle]);
 
-  const handleKakaoSignIn = useCallback(async () => {
-    try {
-      const { data, error } = await signInWithKakao();
+  // TODO: 카카오 로그인 - 추후 업데이트 예정
+  // const handleKakaoSignIn = useCallback(async () => {
+  //   try {
+  //     const { data, error } = await signInWithKakao();
 
-      if (error) {
-        return { success: false, error: error.message || '카카오 로그인에 실패했습니다.' };
-      }
+  //     if (error) {
+  //       return { success: false, error: error.message || '카카오 로그인에 실패했습니다.' };
+  //     }
 
-      return { success: true };
-    } catch (error) {
-      console.error('Kakao sign-in error:', error);
-      return { success: false, error: '카카오 로그인 중 오류가 발생했습니다.' };
-    }
-  }, [signInWithKakao]);
+  //     return { success: true };
+  //   } catch (error) {
+  //     console.error('Kakao sign-in error:', error);
+  //     return { success: false, error: '카카오 로그인 중 오류가 발생했습니다.' };
+  //   }
+  // }, [signInWithKakao]);
 
   const isCurrentUser = useCallback((userId: string) => {
     return currentUser?.id === userId;
   }, [currentUser]);
 
   return {
-    // 상태
+    // 상태 - 동기화된 상태 제공
     currentUser,
-    isAuthenticated: !!user, // user가 있으면 인증된 것으로 처리 (currentUser는 별도로 체크)
-    isLoading: loading || userLoading, // auth loading 또는 user loading 중이면 loading
+    isAuthenticated: isReady && !!user && !!currentUser, // 모든 상태가 준비되고 동기화된 경우에만 true
+    isLoading: loading || userLoading || !isReady, // 모든 로딩 상태를 통합
 
     // 액션
     login,
@@ -173,7 +195,7 @@ export function useAuth(): UseAuthReturn {
 
     // OAuth 액션
     signInWithGoogle: handleGoogleSignIn,
-    signInWithKakao: handleKakaoSignIn,
+    // signInWithKakao: handleKakaoSignIn, // TODO: 추후 업데이트 예정
 
     // 유틸리티
     isCurrentUser,

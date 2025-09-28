@@ -314,3 +314,11 @@ body {
 .header-scrolled {
   border-bottom-color: var(--border);
 }
+
+/* Body scroll lock for mobile menu */
+.body-scroll-lock {
+  overflow: hidden !important;
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+}

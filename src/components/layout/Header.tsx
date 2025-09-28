@@ -2,72 +2,68 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useScrollEffect } from '@/hooks/useScrollEffect';
+import LoginModal from '@/components/ui/LoginModal';
+import SignupModal from '@/components/ui/SignupModal';
 
 export default function Header() {
-  const { currentUser, isAuthenticated, logout } = useAuth();
+  const { currentUser, isAuthenticated, isLoading, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isScrolled = useScrollEffect(10);
 
-  // Close dropdown when clicking outside
+  // 인증 상태 변경 시 메뉴 닫기 (혼동 방지)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
+    setIsMenuOpen(false);
+  }, [isAuthenticated]);
 
+  // 메뉴 외부 클릭 핸들러 최적화
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setIsMenuOpen(false);
+    }
+  }, []);
+
+  // ESC 키 핸들러 최적화
+  const handleEsc = useCallback((event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsMenuOpen(false);
+    }
+  }, []);
+
+  // 메뉴 열림/닫힘에 따른 이벤트 리스너 및 스크롤 잠금 관리
+  useEffect(() => {
     if (isMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEsc);
+      // CSS 클래스를 사용한 스크롤 잠금
+      document.body.classList.add('body-scroll-lock');
+    } else {
+      document.body.classList.remove('body-scroll-lock');
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMenuOpen]);
-
-  // Close dropdown on ESC key
-  useEffect(() => {
-    const handleEsc = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsMenuOpen(false);
-      }
-    };
-
-    if (isMenuOpen) {
-      document.addEventListener('keydown', handleEsc);
-    }
-
-    return () => {
       document.removeEventListener('keydown', handleEsc);
+      // 컴포넌트 언마운트 시 스크롤 잠금 해제
+      document.body.classList.remove('body-scroll-lock');
     };
-  }, [isMenuOpen]);
-
-  // Prevent body scroll when sidebar is open
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isMenuOpen]);
+  }, [isMenuOpen, handleClickOutside, handleEsc]);
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 header-transition ${isScrolled ? 'header-transparent header-scrolled' : 'bg-white'}`}>
-      <div className="h-16 flex items-center justify-between">
+    <>
+      <header className={`fixed top-0 left-0 right-0 z-50 header-transition ${isScrolled ? 'header-transparent header-scrolled' : 'bg-white'}`}>
+      <div className="h-16 flex items-center justify-between px-4 lg:px-6">
         {/* Left Side - Hamburger, Logo, and Search */}
-        <div className="flex items-center flex-1">
-          {/* Hamburger Menu Button - Flush to left edge */}
-          <div ref={dropdownRef} className="relative">
+        <div className="flex items-center flex-1 min-w-0">
+          {/* Hamburger Menu Button */}
+          <div ref={dropdownRef} className="relative w-16 flex-shrink-0">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="h-16 px-6 hover:bg-gray-100 transition-colors flex items-center justify-center"
+              className="h-16 px-3 lg:px-4 hover:bg-gray-100 transition-colors flex items-center justify-center"
               aria-label="Menu"
             >
               <svg
@@ -90,7 +86,30 @@ export default function Header() {
               <div className={`fixed inset-y-0 left-0 w-80 bg-white transform transition-all duration-400 ease-out shadow-2xl z-50 pb-20 ${
                 isMenuOpen ? 'translate-x-0' : '-translate-x-full'
               }`}>
-                {isAuthenticated ? (
+                {isLoading ? (
+                  <>
+                    {/* Loading skeleton for sidebar */}
+                    <div className="p-6 border-b border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+                          <div>
+                            <div className="w-24 h-4 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                        </div>
+                        <div className="ml-4 w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="py-4 space-y-1">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center px-6 py-3">
+                          <div className="w-5 h-5 mr-3 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-16 h-4 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : isAuthenticated ? (
                   <>
                     {/* Top Section - Profile + Write Button */}
                     <div className="p-6 border-b border-gray-200">
@@ -209,16 +228,18 @@ export default function Header() {
 
                         {/* Authentication Section */}
                         <div className="border-t border-gray-200 my-4"></div>
-                        <Link
-                          href="/login"
-                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={() => setIsMenuOpen(false)}
+                        <button
+                          className="w-full flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            setIsLoginModalOpen(true);
+                          }}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                           </svg>
                           로그인
-                        </Link>
+                        </button>
                         <Link
                           href="/signup"
                           className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -255,21 +276,21 @@ export default function Header() {
           {/* Logo - Right next to hamburger */}
           <Link
             href="/"
-            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors"
+            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors flex-shrink-0 px-3 whitespace-nowrap"
           >
             Anxy
           </Link>
 
-          {/* Search Bar - Left positioned */}
-          <div className="flex-1 max-w-48 ml-6">
+          {/* Search Bar - Responsive positioned */}
+          <div className="flex-1 min-w-0 max-w-sm mx-3">
             <div className="relative">
               <input
                 type="text"
                 placeholder="Search"
-                className="w-full pl-10 pr-4 py-2 text-sm text-gray-700 bg-gray-100/30 rounded-full focus:outline-none focus:bg-gray-100/50 placeholder-gray-500"
+                className="w-full pl-8 lg:pl-10 pr-3 lg:pr-4 py-1.5 lg:py-2 text-sm text-gray-700 bg-gray-100/30 rounded-full focus:outline-none focus:bg-gray-100/50 placeholder-gray-500"
               />
               <svg
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                className="absolute left-2 lg:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -286,8 +307,18 @@ export default function Header() {
         </div>
 
         {/* Right Side - Write, Profile */}
-        <div className="flex items-center gap-4 pr-6">
-          {isAuthenticated ? (
+        <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0 min-w-0 mr-2 lg:mr-4">
+          {isLoading ? (
+            // Loading skeleton - 동일한 크기 유지
+            <>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full">
+                <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+                <div className="hidden lg:block w-12 h-4 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="w-8 h-8 bg-gray-200 border border-gray-200 rounded-full animate-pulse flex-shrink-0">
+              </div>
+            </>
+          ) : isAuthenticated ? (
             <>
               {/* Write Button */}
               <Link
@@ -312,21 +343,42 @@ export default function Header() {
               </Link>
 
               {/* Profile Image */}
-              <Link href={`/u/${currentUser?.username}`}>
-                <div className="w-8 h-8 border border-gray-200 rounded-full focus:outline-none hover:bg-gray-100 transition-colors cursor-pointer">
+              <Link href={`/u/${currentUser?.username}`} className="flex-shrink-0">
+                <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full focus:outline-none hover:bg-gray-200 transition-colors cursor-pointer">
                 </div>
               </Link>
             </>
           ) : (
-            <Link
-              href="/login"
-              className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            <button
+              onClick={() => setIsLoginModalOpen(true)}
+              className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
             >
               로그인
-            </Link>
+            </button>
           )}
         </div>
       </div>
     </header>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSwitchToSignup={() => {
+          setIsLoginModalOpen(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
+
+      {/* Signup Modal */}
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onSwitchToLogin={() => {
+          setIsSignupModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
+      />
+    </>
   );
 }
