@@ -3,73 +3,76 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 // Supabase instance cache
 let supabaseInstance: SupabaseClient | null = null
 
-// 환경변수에서 Supabase 설정 가져오기 (하드코딩 완전 제거)
-const getSupabaseConfig = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// 환경변수 가져오기 - 빌드 타임에 처리
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // 디버깅 정보 추가
-  console.log('🔍 Environment variable check:', {
-    url_exists: !!url,
-    url_type: typeof url,
-    url_value: url ? `${url.substring(0, 20)}...` : 'undefined',
-    key_exists: !!key,
-    key_type: typeof key,
-    key_length: key ? key.length : 0,
-    is_browser: typeof window !== 'undefined',
-    node_env: process.env.NODE_ENV
+// 개발 환경에서 환경 변수 디버깅
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('🔍 Supabase Environment Check:', {
+    url_exists: !!SUPABASE_URL,
+    key_exists: !!SUPABASE_ANON_KEY,
+    url_value: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'undefined',
   })
-
-  // 환경변수 엄격한 검증
-  if (!url || url.trim() === '' || url === 'undefined') {
-    console.error('❌ NEXT_PUBLIC_SUPABASE_URL missing or invalid:', {
-      value: url,
-      type: typeof url,
-      all_env_keys: Object.keys(process.env).filter(k => k.startsWith('NEXT_PUBLIC_'))
-    })
-    throw new Error(`NEXT_PUBLIC_SUPABASE_URL is required. Please set it in your environment variables. Current value: ${url}`)
-  }
-
-  if (!key || key.trim() === '' || key === 'undefined') {
-    console.error('❌ NEXT_PUBLIC_SUPABASE_ANON_KEY missing or invalid:', {
-      value: key ? `${key.substring(0, 10)}...` : key,
-      type: typeof key,
-      length: key ? key.length : 0
-    })
-    throw new Error(`NEXT_PUBLIC_SUPABASE_ANON_KEY is required. Please set it in your environment variables. Current value: ${key ? 'present but invalid' : 'missing'}`)
-  }
-
-  console.log('✅ Supabase config loaded from environment variables')
-  return { url, key }
 }
 
-// Supabase 클라이언트 생성 함수 (완전한 lazy initialization)
+// Supabase 클라이언트 생성 함수
 export const getSupabaseClient = (): SupabaseClient => {
-  if (!supabaseInstance) {
-    try {
-      const { url, key } = getSupabaseConfig()
-      supabaseInstance = createClient(url, key, {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true
-        }
-      })
-      console.log('✅ Supabase client initialized successfully')
-    } catch (error) {
-      console.error('❌ Failed to initialize Supabase client:', error)
-      throw error
-    }
+  // 클라이언트가 이미 있으면 반환
+  if (supabaseInstance) {
+    return supabaseInstance
   }
-  return supabaseInstance
+
+  // 환경 변수 검증
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    const errorMsg = `
+      ❌ Supabase 환경 변수가 설정되지 않았습니다.
+
+      필요한 환경 변수:
+      - NEXT_PUBLIC_SUPABASE_URL: ${SUPABASE_URL ? '✅ 설정됨' : '❌ 누락'}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY ? '✅ 설정됨' : '❌ 누락'}
+
+      해결 방법:
+      1. .env.local 파일에 환경 변수가 있는지 확인
+      2. 환경 변수 이름이 정확한지 확인 (NEXT_PUBLIC_ 접두사 필수)
+      3. 개발 서버를 재시작 (npm run dev)
+      4. Vercel에 배포한 경우 환경 변수 설정 확인
+    `
+    console.error(errorMsg)
+    throw new Error('Missing Supabase environment variables. Check console for details.')
+  }
+
+  // Supabase 클라이언트 생성
+  try {
+    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      }
+    })
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Supabase client initialized successfully')
+    }
+
+    return supabaseInstance
+  } catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error)
+    throw error
+  }
 }
 
-// Backward compatibility
+// OAuth 콜백용 클라이언트 - 동일한 싱글톤 인스턴스 반환
 export const createCallbackClient = (): SupabaseClient => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔄 Creating callback client (same singleton instance)')
+  }
   return getSupabaseClient()
 }
 
-// 함수 참조만 내보내기 (즉시 실행 완전 방지)
+// 함수 참조 내보내기 - 모든 utils에서 supabase()로 호출
 export const supabase = getSupabaseClient
 
 // 타입 정의

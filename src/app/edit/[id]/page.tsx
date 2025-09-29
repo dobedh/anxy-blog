@@ -180,7 +180,7 @@ export default function EditPostPage({ params }: EditPostPageProps) {
     // Only redirect if loading is complete and definitely not authenticated
     if (!isLoading && !isAuthenticated) {
       console.log('❌ Not authenticated, redirecting to login');
-      router.push('/login');
+      router.push('/');
     }
   }, [isAuthenticated, isLoading, router]);
 

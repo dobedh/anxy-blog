@@ -360,11 +360,11 @@ export default function SignupPage() {
             이미 계정이 있으신가요?
           </p>
           <Link
-            href="/login"
+            href="/"
             className="inline-block bg-accent text-primary px-6 py-3 rounded-lg text-body font-medium hover:bg-border transition-gentle focus-ring"
             style={{ minHeight: '44px' }}
           >
-            로그인하기
+            홈으로 가기
           </Link>
         </div>
 

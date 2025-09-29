@@ -20,7 +20,7 @@ export default function LikesPage() {
   // 로그인 상태 확인
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      router.push('/');
     }
   }, [isAuthenticated, isLoading, router]);
 

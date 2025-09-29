@@ -14,7 +14,7 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ 
   children, 
   requireAuth = true,
-  redirectTo = '/login',
+  redirectTo = '/', // \ub85c\uadf8\uc778 \ud398\uc774\uc9c0 \ub300\uc2e0 \ud648\uc73c\ub85c \ub9ac\ub2e4\uc774\ub809\ud2b8
   loadingComponent
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();

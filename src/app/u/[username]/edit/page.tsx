@@ -24,7 +24,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
   useEffect(() => {
     const loadUserData = async () => {
       if (!isAuthenticated) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 

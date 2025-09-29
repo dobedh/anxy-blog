@@ -29,7 +29,8 @@ export default function AuthCallbackPage() {
         if (error) {
           console.error('Auth callback error:', error)
           setIsProcessing(false)
-          router.push('/login?error=auth_failed')
+          // OAuth 에러 시 홈으로 리다이렉트 (모달로 처리)
+          router.push('/')
           return
         }
 
@@ -81,7 +82,8 @@ export default function AuthCallbackPage() {
             if (insertError) {
               console.error('Error creating profile:', insertError)
               setIsProcessing(false)
-              router.push('/login?error=profile_creation_failed')
+              // 프로필 생성 실패 시 홈으로 리다이렉트
+              router.push('/')
               return
             }
 
@@ -89,26 +91,27 @@ export default function AuthCallbackPage() {
           } else if (profileError) {
             console.error('Error fetching profile:', profileError)
             setIsProcessing(false)
-            router.push('/login?error=profile_fetch_failed')
+            // 프로필 조회 실패 시 홈으로 리다이렉트
+            router.push('/')
             return
           } else {
             console.log('Existing profile found:', profile.username)
           }
 
-          // 짧은 지연 후 리다이렉트 (세션 동기화 시간 확보)
-          setTimeout(() => {
-            setIsProcessing(false)
-            router.push('/')
-          }, 1000)
+          // 즉시 홈으로 리다이렉트
+          setIsProcessing(false)
+          router.push('/')
         } else {
           console.log('No session found after OAuth callback')
           setIsProcessing(false)
-          router.push('/login')
+          // 세션이 없을 때도 홈으로 리다이렉트
+          router.push('/')
         }
       } catch (err) {
         console.error('Unexpected error in OAuth callback:', err)
         setIsProcessing(false)
-        router.push('/login?error=unexpected')
+        // 예기치 않은 오류 시 홈으로 리다이렉트
+        router.push('/')
       }
     }
 
