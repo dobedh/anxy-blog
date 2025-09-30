@@ -27,6 +27,12 @@ export interface CreatePostData {
   isPrivate?: boolean;
 }
 
+// 임시저장용 인터페이스
+export interface DraftPostData extends CreatePostData {
+  savedAt: string; // ISO 날짜 형식
+  userId: string;  // 임시저장본 소유자
+}
+
 // 글 업데이트용 인터페이스
 export interface UpdatePostData {
   title?: string;
@@ -49,6 +55,7 @@ export type PostSortOption = 'newest' | 'oldest' | 'mostLiked' | 'mostCommented'
 export const POST_STORAGE_KEYS = {
   POSTS: 'anxy_posts',
   USER_POSTS: 'userPosts', // 기존 키 (호환성 유지)
+  DRAFT_POST: 'anxy_draft_post', // 임시저장용 키
 } as const;
 
 

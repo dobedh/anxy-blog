@@ -8,11 +8,21 @@ interface WriteHeaderProps {
   onSave: () => void;
   isSubmitting: boolean;
   isSaved?: boolean;
+  lastSaved?: Date | null;
 }
 
-export default function WriteHeader({ onSave, isSubmitting, isSaved }: WriteHeaderProps) {
+export default function WriteHeader({ onSave, isSubmitting, isSaved, lastSaved }: WriteHeaderProps) {
   const { currentUser } = useAuth();
   const isScrolled = useScrollEffect(10);
+
+  // 임시저장 시간 포맷
+  const formatSaveTime = (date: Date) => {
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 header-transition ${isScrolled ? 'header-transparent header-scrolled' : 'bg-white'}`}>
@@ -25,7 +35,12 @@ export default function WriteHeader({ onSave, isSubmitting, isSaved }: WriteHead
           >
             Anxy
           </Link>
-          {isSaved && (
+          {lastSaved && (
+            <span className="text-sm text-gray-400 transition-gentle">
+              임시저장됨 {formatSaveTime(lastSaved)}
+            </span>
+          )}
+          {!lastSaved && isSaved && (
             <span className="text-sm text-gray-400">Saved</span>
           )}
         </div>

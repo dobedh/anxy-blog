@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createPost } from '@/utils/supabasePostUtils';
-import { CreatePostData } from '@/types/post';
+import { CreatePostData, DraftPostData, POST_STORAGE_KEYS } from '@/types/post';
 import WriteHeader from '@/components/layout/WriteHeader';
 
 function WritePageContent() {
@@ -18,6 +18,60 @@ function WritePageContent() {
     isAnonymous: false,
     isPrivate: false,
   });
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  // 임시저장 키 생성
+  const getDraftKey = (userId: string) => `${POST_STORAGE_KEYS.DRAFT_POST}_${userId}`;
+
+  // 임시저장
+  const saveDraft = useCallback((data: CreatePostData) => {
+    if (!currentUser) return;
+
+    const draft: DraftPostData = {
+      ...data,
+      savedAt: new Date().toISOString(),
+      userId: currentUser.id,
+    };
+
+    try {
+      localStorage.setItem(getDraftKey(currentUser.id), JSON.stringify(draft));
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Failed to save draft:', error);
+    }
+  }, [currentUser]);
+
+  // 임시저장본 불러오기
+  const loadDraft = useCallback(() => {
+    if (!currentUser) return null;
+
+    try {
+      const draftJson = localStorage.getItem(getDraftKey(currentUser.id));
+      if (!draftJson) return null;
+
+      const draft: DraftPostData = JSON.parse(draftJson);
+
+      // 사용자 검증
+      if (draft.userId !== currentUser.id) return null;
+
+      return draft;
+    } catch (error) {
+      console.error('Failed to load draft:', error);
+      return null;
+    }
+  }, [currentUser]);
+
+  // 임시저장본 삭제
+  const clearDraft = useCallback(() => {
+    if (!currentUser) return;
+
+    try {
+      localStorage.removeItem(getDraftKey(currentUser.id));
+      setLastSaved(null);
+    } catch (error) {
+      console.error('Failed to clear draft:', error);
+    }
+  }, [currentUser]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -47,6 +101,7 @@ function WritePageContent() {
       const result = await createPost(formData, currentUser.id);
 
       if (result.success) {
+        clearDraft(); // 임시저장본 삭제
         setIsSaved(true);
         setTimeout(() => {
           router.push(`/u/${currentUser.username}`);
@@ -62,11 +117,53 @@ function WritePageContent() {
     }
   };
 
+  // 자동 임시저장 (2초 디바운스)
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // 빈 내용은 저장하지 않음
+    if (!formData.title.trim() && !formData.content.trim()) {
+      return;
+    }
+
+    // 타이핑 멈춘 후 2초 뒤 자동 저장
+    const timeoutId = setTimeout(() => {
+      saveDraft(formData);
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData, currentUser, saveDraft]);
+
+  // 페이지 마운트 시 임시저장본 복원
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const draft = loadDraft();
+
+    if (draft) {
+      // 사용자에게 복원 여부 확인
+      const shouldRestore = window.confirm(
+        `저장되지 않은 임시 저장본이 있습니다.\n복원하시겠습니까?\n\n마지막 저장: ${new Date(draft.savedAt).toLocaleString('ko-KR')}`
+      );
+
+      if (shouldRestore) {
+        setFormData({
+          title: draft.title,
+          content: draft.content,
+          isAnonymous: draft.isAnonymous || false,
+          isPrivate: draft.isPrivate || false,
+        });
+        setLastSaved(new Date(draft.savedAt));
+      } else {
+        clearDraft();
+      }
+    }
+  }, [currentUser, loadDraft, clearDraft]);
 
   return (
     <div className="min-h-screen bg-white">
       {/* Write Header */}
-      <WriteHeader onSave={handleSave} isSubmitting={isSubmitting} isSaved={isSaved} />
+      <WriteHeader onSave={handleSave} isSubmitting={isSubmitting} isSaved={isSaved} lastSaved={lastSaved} />
 
       {/* Writing area */}
       <div className="max-w-3xl mx-auto px-6 pt-24 pb-20">
