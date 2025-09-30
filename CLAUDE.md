@@ -104,8 +104,9 @@ The design system is built on CSS custom properties in `src/app/globals.css`:
 - **Active state tracking**: Uses `usePathname()` to highlight current page
 - **Authentication-aware header**: Different navigation for logged-in vs guest users
 - **Authenticated users see**: 내 블로그, 글쓰기, 로그아웃
-- **Guest users see**: 로그인, 회원가입  
+- **Guest users see**: 로그인, 회원가입 (modal triggers, not page redirects)
 - **Responsive design**: Icons on mobile (📝, +, ↗), full text on desktop
+- **Modal Integration**: Authentication buttons trigger LoginModal/SignupModal overlays
 
 ### Component Architecture
 
@@ -120,9 +121,12 @@ The design system is built on CSS custom properties in `src/app/globals.css`:
 - **RecommendedAuthors** (`src/components/RecommendedAuthors.tsx`): Sidebar component for user discovery
 
 **Authentication System**:
+- **LoginModal** (`src/components/ui/LoginModal.tsx`): Modal-based login with email/password and OAuth options
+- **SignupModal** (`src/components/ui/SignupModal.tsx`): Registration modal with real-time username validation
 - **useSupabaseAuth Hook** (`src/hooks/useSupabaseAuth.ts`): Centralized Supabase auth operations
-- **Protected Route Logic**: Built into page components, checks auth state
-- **OAuth Integration**: Google and Kakao social login support
+- **useAuth Hook** (`src/hooks/useAuth.ts`): High-level authentication wrapper with user state management
+- **ProtectedRoute Component** (`src/components/ProtectedRoute.tsx`): Route protection with home (/) redirect
+- **OAuth Integration**: Google social login support (Kakao planned for future)
 
 **Key Features**:
 - **More Options Menu**: Context-sensitive actions (edit/delete for own posts, share for others)
@@ -154,11 +158,12 @@ All pages follow a consistent pattern:
 - **Edit Post** (`/edit/[id]`): Post editing with ownership verification
 - **More Options Menu**: Context-sensitive actions based on post ownership
 
-**Authentication Pages**:
-- **Login Page** (`/login`): Supabase Auth integration with social login options
-- **Signup Page** (`/signup`): Real-time username validation and profile creation
-- **Auth Callback** (`/auth/callback`): OAuth redirect handling
-- Auto-redirect logic for authenticated users
+**Modal-Based Authentication System**:
+- **LoginModal** (`/src/components/ui/LoginModal.tsx`): Modal-based login with OAuth and email support
+- **SignupModal** (`/src/components/ui/SignupModal.tsx`): Registration modal with real-time username validation
+- **Header Integration**: Authentication modals triggered from header navigation
+- **Auth Callback** (`/auth/callback`): OAuth redirect handling, all redirects go to home (/) for consistent UX
+- **Signup Page** (`/signup`): Standalone signup page (legacy, primarily uses modal system)
 
 ### Styling Approach
 - **Tailwind CSS 4** integrated via PostCSS plugin
@@ -192,11 +197,14 @@ All pages follow a consistent pattern:
 5. User redirected to appropriate page (home, post detail, etc.)
 
 ### Authentication Flow
-1. User signs up/in via `/login` or `/signup` pages
-2. Supabase Auth handles session management automatically
-3. Profile creation happens automatically during signup
-4. Protected routes check authentication state before rendering
-5. Auth state persists across browser sessions
+1. User clicks "로그인" or "회원가입" in header navigation
+2. LoginModal or SignupModal opens with authentication options
+3. User can choose email/password or Google OAuth login
+4. OAuth authentication redirects via `/auth/callback` to home (/)
+5. Supabase Auth handles session management automatically
+6. Profile creation happens automatically during signup (OAuth) or via modal form
+7. Protected routes check authentication state and redirect to home (/) if unauthenticated
+8. Auth state persists across browser sessions with real-time updates
 
 ### Database Schema Considerations
 - All tables use UUID primary keys for security

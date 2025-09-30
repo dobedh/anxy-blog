@@ -3,6 +3,9 @@ import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import ConditionalHeader from "@/components/layout/ConditionalHeader";
 
+// useSearchParams Suspense boundary 에러 해결을 위해 전체 앱을 dynamic rendering으로 설정
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],

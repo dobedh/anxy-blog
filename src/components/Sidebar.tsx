@@ -79,12 +79,12 @@ export default function Sidebar() {
             <div className="flex items-center">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-gray-700">
-                  {currentUser.displayName.charAt(0)}
+                  {currentUser.username.charAt(0)}
                 </span>
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-900">
-                  {currentUser.displayName}
+                  {currentUser.username}
                 </p>
                 <p className="text-xs text-gray-500">
                   @{currentUser.username}

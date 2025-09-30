@@ -66,7 +66,7 @@ export default function RecommendedAuthors() {
             {/* Avatar */}
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-sm font-semibold text-blue-600">
-                {author.displayName.charAt(0)}
+                {author.username.charAt(0)}
               </span>
             </div>
 
@@ -75,7 +75,7 @@ export default function RecommendedAuthors() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <h4 className="text-gray-900 font-semibold text-sm hover:text-blue-600 cursor-pointer">
-                    {author.displayName}
+                    {author.username}
                   </h4>
                   <p className="text-xs text-gray-600 mt-1">
                     @{author.username}

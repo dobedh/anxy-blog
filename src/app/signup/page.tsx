@@ -33,7 +33,7 @@ export default function SignupPage() {
     setFormData(prev => ({
       ...prev,
       [name]: value,
-      // 표시명은 자동으로 사용자명과 동일하게 설정되므로 별도 처리 불필요
+      // 표시명은 자동으로 닉네임과 동일하게 설정되므로 별도 처리 불필요
     }));
 
     // 해당 필드의 에러 초기화
@@ -46,9 +46,44 @@ export default function SignupPage() {
     }
   };
 
-  // 사용자명 실시간 중복 체크
+  // 기본 유효성 검사 (즉시 실행)
   useEffect(() => {
     if (!formData.username) {
+      // 빈 문자열인 경우 에러 초기화
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.username;
+        return newErrors;
+      });
+      return;
+    }
+
+    // 기본 유효성 검사 먼저 수행 (디바운스 없이 즉시)
+    const validation = validateUsername(formData.username);
+    if (!validation.isValid) {
+      setErrors(prev => ({ ...prev, username: validation.error! }));
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    // 기본 검사를 통과한 경우 에러 초기화
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.username;
+      return newErrors;
+    });
+  }, [formData.username]);
+
+  // 닉네임 중복 체크 (디바운스 적용)
+  useEffect(() => {
+    if (!formData.username) {
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    // 기본 유효성 검사를 통과하지 않으면 중복 체크 안 함
+    const validation = validateUsername(formData.username);
+    if (!validation.isValid) {
       setIsCheckingUsername(false);
       return;
     }
@@ -56,31 +91,28 @@ export default function SignupPage() {
     const checkUsername = async () => {
       setIsCheckingUsername(true);
 
-      // 기본 유효성 검사 먼저 수행
-      const validation = validateUsername(formData.username);
-      if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, username: validation.error! }));
+      try {
+        // 중복 체크 수행
+        const { available, error } = await checkUsernameAvailability(formData.username);
+
+        if (error) {
+          setErrors(prev => ({ ...prev, username: '닉네임 확인 중 오류가 발생했습니다. 다시 시도해주세요.' }));
+        } else if (!available) {
+          setErrors(prev => ({ ...prev, username: '이미 사용 중인 닉네임입니다.' }));
+        } else {
+          // 사용 가능한 닉네임 - 에러 초기화
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.username;
+            return newErrors;
+          });
+        }
+      } catch (error) {
+        console.error('Username availability check error:', error);
+        setErrors(prev => ({ ...prev, username: '닉네임 확인 중 오류가 발생했습니다.' }));
+      } finally {
         setIsCheckingUsername(false);
-        return;
       }
-
-      // 중복 체크 수행
-      const { available, error } = await checkUsernameAvailability(formData.username);
-
-      if (error) {
-        setErrors(prev => ({ ...prev, username: '사용자명 확인 중 오류가 발생했습니다. 다시 시도해주세요.' }));
-      } else if (!available) {
-        setErrors(prev => ({ ...prev, username: '이미 사용 중인 사용자명입니다.' }));
-      } else {
-        // 사용 가능한 사용자명
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.username;
-          return newErrors;
-        });
-      }
-
-      setIsCheckingUsername(false);
     };
 
     const debounceTimer = setTimeout(checkUsername, 500); // 500ms 디바운스
@@ -110,13 +142,13 @@ export default function SignupPage() {
       newErrors.email = '올바른 이메일 형식이 아닙니다.';
     }
 
-    // 사용자명 기본 검증만 수행 (중복체크는 회원가입 시점에서 Supabase가 처리)
+    // 닉네임 기본 검증만 수행 (중복체크는 회원가입 시점에서 Supabase가 처리)
     const usernameValidation = validateUsername(formData.username);
     if (!usernameValidation.isValid) {
       newErrors.username = usernameValidation.error!;
     }
 
-    // 표시명은 사용자명과 동일하게 자동 설정되므로 별도 검증 불필요
+    // 표시명은 닉네임과 동일하게 자동 설정되므로 별도 검증 불필요
 
     // 비밀번호 검증
     if (!formData.password) {
@@ -147,7 +179,6 @@ export default function SignupPage() {
         email: formData.email,
         password: formData.password,
         username: formData.username,
-        displayName: formData.username, // 표시명을 사용자명과 동일하게 설정
         bio: formData.bio,
       });
 
@@ -213,13 +244,13 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* 사용자명 */}
+          {/* 닉네임 */}
           <div>
             <label
               htmlFor="username"
               className="block text-caption text-muted mb-3 font-medium"
             >
-              사용자명 <span className="text-red-500">*</span>
+              닉네임 <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -228,7 +259,7 @@ export default function SignupPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                placeholder="영문, 숫자, 언더스코어 3-20자"
+                placeholder="닉네임"
                 className={`w-full px-4 py-4 text-body border-2 bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none transition-gentle focus-ring ${
                   errors.username ? 'border-red-300' : 'border-accent focus:border-primary'
                 }`}
@@ -253,7 +284,7 @@ export default function SignupPage() {
             )}
           </div>
 
-          {/* 표시명은 사용자명과 동일하게 자동 설정됩니다 */}
+          {/* 표시명은 닉네임과 동일하게 자동 설정됩니다 */}
           {formData.username && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <p className="text-sm text-gray-600">
@@ -276,7 +307,7 @@ export default function SignupPage() {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              placeholder="6자 이상 입력하세요"
+              placeholder="비밀번호를 입력하세요"
               className={`w-full px-4 py-4 text-body border-2 bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none transition-gentle focus-ring ${
                 errors.password ? 'border-red-300' : 'border-accent focus:border-primary'
               }`}

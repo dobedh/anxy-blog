@@ -112,7 +112,7 @@ export function useUserProfile(userId?: string): UseUserProfileReturn {
   };
 }
 
-// 사용자명으로 프로필을 가져오는 hook
+// 닉네임으로 프로필을 가져오는 hook
 export function useUserProfileByUsername(username?: string): UseUserProfileReturn {
   const { getUserByUsername } = useUser();
   

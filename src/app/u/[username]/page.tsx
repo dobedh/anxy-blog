@@ -27,7 +27,7 @@ export default function UserPage({ params }: UserPageProps) {
   }>({ isOpen: false, type: null });
 
   const resolvedParams = use(params);
-  const username = resolvedParams?.username;
+  const username = resolvedParams?.username ? decodeURIComponent(resolvedParams.username) : undefined;
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -107,7 +107,7 @@ export default function UserPage({ params }: UserPageProps) {
       {/* User Profile Section */}
       <div className="text-center mb-16">
         <h1 className="text-hero font-bold text-foreground mb-4">
-          {user.displayName}
+          {user.username}
         </h1>
         {user.bio && (
           <p className="text-body text-foreground max-w-md mx-auto leading-relaxed">
@@ -156,7 +156,7 @@ export default function UserPage({ params }: UserPageProps) {
         {posts.length > 0 ? (
           <>
             <h2 className="text-title font-semibold text-foreground border-b border-accent pb-4">
-              {user.displayName}님의 글
+              {user.username}님의 글
             </h2>
             <div className="space-y-6">
               {posts.map((post) => (
@@ -168,7 +168,7 @@ export default function UserPage({ params }: UserPageProps) {
           <div className="text-center py-16 bg-subtle rounded-xl border border-accent">
             <p className="text-body text-muted mb-4">아직 작성된 글이 없습니다</p>
             <p className="text-caption text-muted">
-              {user.displayName}님의 첫 번째 글을 기다리고 있어요
+              {user.username}님의 첫 번째 글을 기다리고 있어요
             </p>
           </div>
         )}

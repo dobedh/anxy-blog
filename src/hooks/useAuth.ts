@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSupabaseAuth } from './useSupabaseAuth';
 import { getSupabaseClient } from '@/lib/supabase';
+import { checkUsernameAvailability as supabaseCheckUsername } from '@/utils/supabaseUserUtils';
 import { LoginCredentials, SignupData, AuthUser, OAuthSignupData } from '@/types/user';
 
 interface UseAuthReturn {
@@ -21,10 +22,11 @@ interface UseAuthReturn {
   // 유틸리티
   isCurrentUser: (userId: string) => boolean;
   checkUsernameAvailability: (username: string) => Promise<{ available: boolean; error?: unknown }>;
+  refreshCurrentUser: () => Promise<void>;
 }
 
 export function useAuth(): UseAuthReturn {
-  const { user, loading, signIn, signInWithEmailOrUsername, signUp, signOut, signInWithGoogle, /* signInWithKakao, */ checkUsernameAvailability } = useSupabaseAuth();
+  const { user, loading, signIn, signInWithEmailOrUsername, signUp, signOut, signInWithGoogle /* signInWithKakao, */ } = useSupabaseAuth();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [userLoading, setUserLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -53,30 +55,28 @@ export function useAuth(): UseAuthReturn {
             .from('profiles')
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
           if (error) {
             console.error('Error fetching profile:', error);
+            setCurrentUser(null);
+          } else if (!profile) {
             // 프로필이 없을 경우 기본 사용자 정보로 설정
-            if (error.code === 'PGRST116') {
-              console.log('Profile not found, creating minimal user object');
-              setCurrentUser({
-                id: user.id,
-                username: user.email?.split('@')[0] || 'unknown',
-                displayName: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
-                email: user.email,
-                avatarUrl: user.user_metadata?.avatar_url || null
-              });
-            } else {
-              setCurrentUser(null);
-            }
+            console.log('Profile not found, creating minimal user object');
+            setCurrentUser({
+              id: user.id,
+              username: user.email?.split('@')[0] || 'unknown',
+              email: user.email,
+              avatarUrl: user.user_metadata?.avatar_url || null,
+              bio: ''
+            });
           } else {
             setCurrentUser({
               id: user.id,
               username: profile.username,
-              displayName: profile.display_name,
               email: user.email,
-              avatarUrl: profile.avatar_url
+              avatarUrl: profile.avatar_url,
+              bio: profile.bio
             });
           }
         } catch (error) {
@@ -114,23 +114,18 @@ export function useAuth(): UseAuthReturn {
 
   const signup = useCallback(async (data: SignupData) => {
     try {
-      // 사용자명 중복 체크
-      const { available, error: checkError } = await checkUsernameAvailability(data.username);
-
-      if (checkError) {
-        return { success: false, error: '사용자명 확인 중 오류가 발생했습니다.' };
-      }
-
+      // 닉네임 중복 체크
+      const available = await supabaseCheckUsername(data.username);
       if (!available) {
-        return { success: false, error: '이미 사용 중인 사용자명입니다.' };
+        return { success: false, error: '이미 사용 중인 닉네임입니다.' };
       }
+
 
       const { data: authData, error } = await signUp(
         data.email,
         data.password,
         {
           username: data.username,
-          display_name: data.displayName,
           bio: data.bio
         }
       );
@@ -144,7 +139,7 @@ export function useAuth(): UseAuthReturn {
       console.error('Signup error:', error);
       return { success: false, error: '회원가입 중 오류가 발생했습니다.' };
     }
-  }, [signUp, checkUsernameAvailability]);
+  }, [signUp]);
 
   const logout = useCallback(async () => {
     try {
@@ -189,6 +184,66 @@ export function useAuth(): UseAuthReturn {
     return currentUser?.id === userId;
   }, [currentUser]);
 
+  // 닉네임 중복 체크 wrapper 함수
+  const checkUsernameAvailability = useCallback(async (username: string) => {
+    try {
+      const available = await supabaseCheckUsername(username);
+      return { available, error: null };
+    } catch (error) {
+      console.error('Error checking username availability:', error);
+      return { available: false, error };
+    }
+  }, []);
+
+  // 현재 사용자 정보 수동 새로고침
+  const refreshCurrentUser = useCallback(async () => {
+    if (!user) {
+      console.log('No user to refresh');
+      return;
+    }
+
+    if (typeof window === 'undefined') {
+      console.log('Server-side render, skipping user refresh');
+      return;
+    }
+
+    setUserLoading(true);
+    try {
+      console.log('🔄 Refreshing current user profile...');
+      const supabaseClient = getSupabaseClient();
+      const { data: profile, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error refreshing profile:', error);
+        return;
+      }
+
+      if (!profile) {
+        console.log('Profile not found during refresh');
+        return;
+      }
+
+      const refreshedUser: AuthUser = {
+        id: user.id,
+        username: profile.username,
+        email: user.email,
+        avatarUrl: profile.avatar_url,
+        bio: profile.bio
+      };
+
+      setCurrentUser(refreshedUser);
+      console.log('✅ User profile refreshed successfully:', profile.username);
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    } finally {
+      setUserLoading(false);
+    }
+  }, [user]);
+
   return {
     // 상태 - 동기화된 상태 제공
     currentUser,
@@ -207,5 +262,6 @@ export function useAuth(): UseAuthReturn {
     // 유틸리티
     isCurrentUser,
     checkUsernameAvailability,
+    refreshCurrentUser,
   };
 }

@@ -42,9 +42,9 @@ export default function AuthCallbackPage() {
             .from('profiles')
             .select('*')
             .eq('id', data.session.user.id)
-            .single()
+            .maybeSingle()
 
-          if (profileError && profileError.code === 'PGRST116') {
+          if (!profile && !profileError) {
             // 프로필이 없으면 생성
             console.log('Creating new profile for user:', data.session.user.id)
             const userMetadata = data.session.user.user_metadata
@@ -61,7 +61,7 @@ export default function AuthCallbackPage() {
               .from('profiles')
               .select('username')
               .eq('username', username)
-              .single()
+              .maybeSingle()
 
             if (existingUser) {
               username = `${username}_${Date.now()}`
@@ -72,7 +72,6 @@ export default function AuthCallbackPage() {
               .insert({
                 id: data.session.user.id,
                 username: username,
-                display_name: userMetadata.full_name || userMetadata.name || username,
                 bio: '',
                 avatar_url: userMetadata.avatar_url || userMetadata.picture,
                 is_private: false,

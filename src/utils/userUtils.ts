@@ -31,39 +31,27 @@ function generateUserId(): string {
   return `user_${timestamp}_${randomStr}`;
 }
 
-// 사용자명 유효성 검사
+// 닉네임 유효성 검사
 export function validateUsername(username: string): { isValid: boolean; error?: string } {
   if (!username) {
-    return { isValid: false, error: '사용자명을 입력해주세요.' };
+    return { isValid: false, error: '닉네임을 입력해주세요.' };
   }
   
-  if (username.length < 3) {
-    return { isValid: false, error: '사용자명은 3자 이상이어야 합니다.' };
+  if (username.length < 2) {
+    return { isValid: false, error: '닉네임은 2자 이상이어야 합니다.' };
   }
   
   if (username.length > 20) {
-    return { isValid: false, error: '사용자명은 20자 이하여야 합니다.' };
+    return { isValid: false, error: '닉네임은 20자 이하여야 합니다.' };
   }
   
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-    return { isValid: false, error: '사용자명은 영문, 숫자, 언더스코어만 사용 가능합니다.' };
+  if (!/^[a-zA-Z0-9_가-힣]+$/.test(username)) {
+    return { isValid: false, error: '닉네임은 영문, 숫자, 언더스코어, 한글만 사용 가능합니다.' };
   }
   
   return { isValid: true };
 }
 
-// 표시명 유효성 검사
-export function validateDisplayName(displayName: string): { isValid: boolean; error?: string } {
-  if (!displayName) {
-    return { isValid: false, error: '표시명을 입력해주세요.' };
-  }
-  
-  if (displayName.length > 30) {
-    return { isValid: false, error: '표시명은 30자 이하여야 합니다.' };
-  }
-  
-  return { isValid: true };
-}
 
 // localStorage에서 사용자 데이터 로드
 export function loadUsers(): Record<string, User> {
@@ -86,7 +74,7 @@ export function saveUsers(users: Record<string, User>): void {
   }
 }
 
-// 사용자명 중복 체크
+// 닉네임 중복 체크
 export function checkUsernameAvailability(username: string): boolean {
   const users = loadUsers();
   return !Object.values(users).some(user => user.username === username);
@@ -101,21 +89,15 @@ export function createUser(data: CreateUserData): { success: boolean; user?: Use
       return { success: false, error: usernameValidation.error };
     }
     
-    const displayNameValidation = validateDisplayName(data.displayName);
-    if (!displayNameValidation.isValid) {
-      return { success: false, error: displayNameValidation.error };
-    }
-    
     // 중복 체크
     if (!checkUsernameAvailability(data.username)) {
-      return { success: false, error: '이미 사용 중인 사용자명입니다.' };
+      return { success: false, error: '이미 사용 중인 닉네임입니다.' };
     }
     
     // 새 사용자 객체 생성
     const newUser: User = {
       id: generateUserId(),
       username: data.username,
-      displayName: data.displayName,
       bio: data.bio || DEFAULT_USER_VALUES.bio,
       avatar: DEFAULT_USER_VALUES.avatar,
       createdAt: new Date().toISOString(),
@@ -145,13 +127,6 @@ export function updateUser(userId: string, updates: UpdateUserData): { success: 
       return { success: false, error: '사용자를 찾을 수 없습니다.' };
     }
     
-    // 표시명 유효성 검사 (업데이트 시에만)
-    if (updates.displayName) {
-      const displayNameValidation = validateDisplayName(updates.displayName);
-      if (!displayNameValidation.isValid) {
-        return { success: false, error: displayNameValidation.error };
-      }
-    }
     
     // 업데이트
     const updatedUser: User = { ...user, ...updates };
@@ -184,14 +159,14 @@ export function deleteUser(userId: string): { success: boolean; error?: string }
   }
 }
 
-// 사용자 로그인 (간단한 사용자명 기반)
+// 사용자 로그인 (간단한 닉네임 기반)
 export function loginUser(credentials: LoginCredentials): { success: boolean; user?: AuthUser; error?: string } {
   try {
     const users = loadUsers();
     const user = Object.values(users).find(u => u.username === credentials.username);
     
     if (!user) {
-      return { success: false, error: '존재하지 않는 사용자명입니다.' };
+      return { success: false, error: '존재하지 않는 닉네임입니다.' };
     }
     
     // 간단한 비밀번호 검증 (실제로는 해시된 비밀번호와 비교)
@@ -205,7 +180,6 @@ export function loginUser(credentials: LoginCredentials): { success: boolean; us
     const authUser: AuthUser = {
       id: user.id,
       username: user.username,
-      displayName: user.displayName,
     };
     
     return { success: true, user: authUser };
@@ -221,7 +195,6 @@ export function signupUser(data: SignupData): { success: boolean; user?: AuthUse
     // 사용자 생성
     const createResult = createUser({
       username: data.username,
-      displayName: data.displayName,
       bio: data.bio,
     });
     
@@ -238,7 +211,6 @@ export function signupUser(data: SignupData): { success: boolean; user?: AuthUse
     const authUser: AuthUser = {
       id: user.id,
       username: user.username,
-      displayName: user.displayName,
     };
     
     return { success: true, user: authUser };
@@ -276,7 +248,7 @@ export function getUserById(userId: string): User | undefined {
   return users[userId];
 }
 
-// 사용자명으로 사용자 조회
+// 닉네임으로 사용자 조회
 export function getUserByUsername(username: string): User | undefined {
   const users = loadUsers();
   return Object.values(users).find(user => user.username === username);

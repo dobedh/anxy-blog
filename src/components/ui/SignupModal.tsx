@@ -77,12 +77,12 @@ export default function SignupModal({ isOpen, onClose, onSwitchToLogin }: Signup
   // Username 중복 체크
   useEffect(() => {
     const checkUsername = async () => {
-      if (formData.username.length >= 3) {
+      if (formData.username.length >= 2) {
         setIsCheckingUsername(true);
         const result = await checkUsernameAvailability(formData.username);
 
         if (!result.available) {
-          setErrors(prev => ({ ...prev, username: '이미 사용 중인 사용자명입니다.' }));
+          setErrors(prev => ({ ...prev, username: '이미 사용 중인 닉네임입니다.' }));
         } else {
           setErrors(prev => {
             const newErrors = { ...prev };
@@ -116,9 +116,9 @@ export default function SignupModal({ isOpen, onClose, onSwitchToLogin }: Signup
     }
 
     if (!formData.username) {
-      newErrors.username = '사용자명을 입력해주세요.';
-    } else if (formData.username.length < 3) {
-      newErrors.username = '사용자명은 3자 이상이어야 합니다.';
+      newErrors.username = '닉네임을 입력해주세요.';
+    } else if (formData.username.length < 2) {
+      newErrors.username = '닉네임은 2자 이상이어야 합니다.';
     }
 
     if (!formData.password) {
@@ -148,7 +148,6 @@ export default function SignupModal({ isOpen, onClose, onSwitchToLogin }: Signup
         email: formData.email,
         password: formData.password,
         username: formData.username,
-        displayName: formData.username,
       });
 
       if (result.success) {
@@ -389,7 +388,7 @@ export default function SignupModal({ isOpen, onClose, onSwitchToLogin }: Signup
                   name="username"
                   value={formData.username}
                   onChange={handleInputChange}
-                  placeholder="사용자명 (@username)"
+                  placeholder="닉네임"
                   className={`w-full px-4 py-3 text-sm border rounded-lg focus:outline-none transition-colors ${
                     errors.username ? 'border-red-300' : 'border-gray-300 focus:border-gray-400'
                   }`}
@@ -410,7 +409,7 @@ export default function SignupModal({ isOpen, onClose, onSwitchToLogin }: Signup
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="비밀번호 (6자 이상)"
+                  placeholder="비밀번호"
                   className={`w-full px-4 py-3 text-sm border rounded-lg focus:outline-none transition-colors ${
                     errors.password ? 'border-red-300' : 'border-gray-300 focus:border-gray-400'
                   }`}

@@ -203,7 +203,7 @@ export default function PostPage({ params }: PostPageProps) {
       const result = createComment(
         { content: commentInput, postId },
         currentUser.id,
-        currentUser.displayName
+        currentUser.username
       );
 
       if (result.success) {
@@ -365,7 +365,7 @@ export default function PostPage({ params }: PostPageProps) {
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-sm font-semibold text-gray-700">
-                    {currentUser?.displayName.charAt(0)}
+                    {currentUser?.username.charAt(0)}
                   </span>
                 </div>
                 <div className="flex-1">
@@ -395,10 +395,10 @@ export default function PostPage({ params }: PostPageProps) {
             <div className="mb-6 p-4 bg-gray-50 rounded-lg text-center">
               <p className="text-sm text-gray-600 mb-2">댓글을 작성하려면 로그인이 필요합니다.</p>
               <Link
-                href="/login"
+                href="/"
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
-                로그인하기
+                홈에서 로그인하기
               </Link>
             </div>
           )}

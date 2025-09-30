@@ -90,7 +90,7 @@ export async function createPost(
       content: data.content.trim(),
       excerpt: generateExcerpt(data.content),
       author_id: data.isAnonymous ? null : authorId,
-      author_name: data.isAnonymous ? '익명' : author.displayName,
+      author_name: data.isAnonymous ? '익명' : author.username,
       is_anonymous: data.isAnonymous || false,
       is_private: data.isPrivate || false,
     };
@@ -126,10 +126,14 @@ export async function updatePost(
       .from('posts')
       .select('*')
       .eq('id', postId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
       console.error('Error fetching post:', fetchError);
+      return { success: false, error: '글을 찾을 수 없습니다.' };
+    }
+
+    if (!existingPost) {
       return { success: false, error: '글을 찾을 수 없습니다.' };
     }
 
@@ -187,10 +191,14 @@ export async function deletePost(postId: string, authorId: string): Promise<{ su
       .from('posts')
       .select('author_id')
       .eq('id', postId)
-      .single();
+      .maybeSingle();
 
     if (fetchError) {
       console.error('Error fetching post:', fetchError);
+      return { success: false, error: '글을 찾을 수 없습니다.' };
+    }
+
+    if (!existingPost) {
       return { success: false, error: '글을 찾을 수 없습니다.' };
     }
 
@@ -293,12 +301,14 @@ export async function getPostById(postId: string): Promise<Post | undefined> {
       .from('posts')
       .select('*')
       .eq('id', postId)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      if (error.code !== 'PGRST116') {
-        console.error('Error fetching post by ID:', error);
-      }
+      console.error('Error fetching post by ID:', error);
+      return undefined;
+    }
+
+    if (!post) {
       return undefined;
     }
 

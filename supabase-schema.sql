@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
 
   PRIMARY KEY (id),
-  CONSTRAINT username_length CHECK (char_length(username) >= 3 AND char_length(username) <= 20),
-  CONSTRAINT username_format CHECK (username ~ '^[a-zA-Z0-9_]+$')
+  CONSTRAINT username_length CHECK (char_length(username) >= 2 AND char_length(username) <= 20),
+  CONSTRAINT username_format CHECK (username ~ '^[a-zA-Z0-9_가-힣]+$')
 );
 
 -- 2. 글 테이블

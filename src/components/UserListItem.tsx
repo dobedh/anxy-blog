@@ -21,7 +21,7 @@ export default function UserListItem({ user, onClick }: UserListItemProps) {
       {/* 프로필 이미지 */}
       <div className="w-12 h-12 bg-brunch-light-green rounded-full flex items-center justify-center flex-shrink-0">
         <span className="text-lg font-semibold text-gray-700">
-          {user.displayName.charAt(0)}
+          {user.username.charAt(0)}
         </span>
       </div>
 
@@ -29,7 +29,7 @@ export default function UserListItem({ user, onClick }: UserListItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-medium text-gray-900 truncate">
-            {user.displayName}
+            {user.username}
           </h3>
         </div>
         <p className="text-sm text-gray-500 truncate">

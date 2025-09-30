@@ -13,7 +13,6 @@ interface EditProfilePageProps {
 export default function EditProfilePage({ params }: EditProfilePageProps) {
   const { currentUser, isAuthenticated } = useAuth();
   const [user, setUser] = useState<User | null>(null);
-  const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -42,7 +41,6 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
       }
 
       setUser(userData);
-      setDisplayName(userData.displayName);
       setBio(userData.bio || '');
       setIsLoading(false);
     };
@@ -57,7 +55,6 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
 
     try {
       const result = await updateUser(user.id, {
-        displayName: displayName.trim(),
         bio: bio.trim()
       });
 
@@ -97,21 +94,6 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
         </h1>
 
         <div className="space-y-6">
-          {/* 이름 입력 */}
-          <div>
-            <label htmlFor="displayName" className="block text-body font-medium text-foreground mb-2">
-              이름
-            </label>
-            <input
-              type="text"
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full px-4 py-3 text-body bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-gentle"
-              placeholder="표시될 이름을 입력하세요"
-              maxLength={50}
-            />
-          </div>
 
           {/* 소개글 입력 */}
           <div>
@@ -142,7 +124,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
             </button>
             <button
               onClick={handleSave}
-              disabled={isSaving || !displayName.trim()}
+              disabled={isSaving}
               className="flex-1 px-6 py-3 bg-primary text-surface rounded-lg font-medium hover:bg-primary-hover transition-gentle focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (

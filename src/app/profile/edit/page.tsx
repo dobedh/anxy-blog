@@ -10,7 +10,6 @@ export default function EditProfilePage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     username: '',
-    displayName: '',
     bio: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,15 +28,53 @@ export default function EditProfilePage() {
     if (currentUser) {
       setFormData({
         username: currentUser.username || '',
-        displayName: currentUser.displayName || '',
         bio: currentUser.bio || '',
       });
     }
   }, [currentUser]);
 
-  // 사용자명 실시간 중복 체크 (기존 사용자명과 다를 때만)
+  // 기본 유효성 검사 (즉시 실행)
+  useEffect(() => {
+    if (!formData.username || !currentUser) {
+      return;
+    }
+
+    // 기존 닉네임과 동일한 경우 에러 초기화
+    if (formData.username === currentUser.username) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.username;
+        return newErrors;
+      });
+      return;
+    }
+
+    // 기본 유효성 검사 먼저 수행 (디바운스 없이 즉시)
+    const validation = validateUsername(formData.username);
+    if (!validation.isValid) {
+      setErrors(prev => ({ ...prev, username: validation.error! }));
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    // 기본 검사를 통과한 경우 에러 초기화
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors.username;
+      return newErrors;
+    });
+  }, [formData.username, currentUser]);
+
+  // 닉네임 중복 체크 (디바운스 적용)
   useEffect(() => {
     if (!formData.username || !currentUser || formData.username === currentUser.username) {
+      setIsCheckingUsername(false);
+      return;
+    }
+
+    // 기본 유효성 검사를 통과하지 않으면 중복 체크 안 함
+    const validation = validateUsername(formData.username);
+    if (!validation.isValid) {
       setIsCheckingUsername(false);
       return;
     }
@@ -45,31 +82,28 @@ export default function EditProfilePage() {
     const checkUsername = async () => {
       setIsCheckingUsername(true);
 
-      // 기본 유효성 검사 먼저 수행
-      const validation = validateUsername(formData.username);
-      if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, username: validation.error! }));
+      try {
+        // 중복 체크 수행
+        const { available, error } = await checkUsernameAvailability(formData.username);
+
+        if (error) {
+          setErrors(prev => ({ ...prev, username: '닉네임 확인 중 오류가 발생했습니다. 다시 시도해주세요.' }));
+        } else if (!available) {
+          setErrors(prev => ({ ...prev, username: '이미 사용 중인 닉네임입니다.' }));
+        } else {
+          // 사용 가능한 닉네임 - 에러 초기화
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.username;
+            return newErrors;
+          });
+        }
+      } catch (error) {
+        console.error('Username availability check error:', error);
+        setErrors(prev => ({ ...prev, username: '닉네임 확인 중 오류가 발생했습니다.' }));
+      } finally {
         setIsCheckingUsername(false);
-        return;
       }
-
-      // 중복 체크 수행
-      const { available, error } = await checkUsernameAvailability(formData.username);
-
-      if (error) {
-        setErrors(prev => ({ ...prev, username: '사용자명 확인 중 오류가 발생했습니다. 다시 시도해주세요.' }));
-      } else if (!available) {
-        setErrors(prev => ({ ...prev, username: '이미 사용 중인 사용자명입니다.' }));
-      } else {
-        // 사용 가능한 사용자명
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.username;
-          return newErrors;
-        });
-      }
-
-      setIsCheckingUsername(false);
     };
 
     const debounceTimer = setTimeout(checkUsername, 500); // 500ms 디바운스
@@ -96,18 +130,12 @@ export default function EditProfilePage() {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // 사용자명 검증 (기본 유효성만 - 중복체크는 실시간으로 처리됨)
+    // 닉네임 검증 (기본 유효성만 - 중복체크는 실시간으로 처리됨)
     const usernameValidation = validateUsername(formData.username);
     if (!usernameValidation.isValid) {
       newErrors.username = usernameValidation.error!;
     }
 
-    // 표시명 검증
-    if (!formData.displayName.trim()) {
-      newErrors.displayName = '표시명을 입력해주세요.';
-    } else if (formData.displayName.length > 30) {
-      newErrors.displayName = '표시명은 30자 이하여야 합니다.';
-    }
 
     // bio는 선택사항이므로 길이 체크만
     if (formData.bio.length > 200) {
@@ -131,13 +159,12 @@ export default function EditProfilePage() {
     try {
       const result = await updateUser(currentUser.id, {
         username: formData.username,
-        displayName: formData.displayName,
         bio: formData.bio,
       });
 
       if (result.success) {
-        // 사용자명이 변경된 경우 새로운 사용자명으로 리다이렉트
-        router.push(`/u/${formData.username}`);
+        // 페이지 새로고침을 통한 완전한 상태 동기화
+        window.location.href = `/u/${formData.username}`;
       } else {
         setErrors({ general: result.error || '프로필 업데이트에 실패했습니다.' });
       }
@@ -187,13 +214,13 @@ export default function EditProfilePage() {
             </div>
           )}
 
-          {/* 사용자명 */}
+          {/* 닉네임 */}
           <div>
             <label
               htmlFor="username"
               className="block text-caption text-muted mb-3 font-medium"
             >
-              사용자명 <span className="text-red-500">*</span>
+              닉네임 <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -202,7 +229,7 @@ export default function EditProfilePage() {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                placeholder="영문, 숫자, 언더스코어 3-20자"
+                placeholder="닉네임"
                 className={`w-full px-4 py-4 text-body border-2 bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none transition-gentle focus-ring ${
                   errors.username ? 'border-red-300' : 'border-accent focus:border-primary'
                 }`}
@@ -226,36 +253,10 @@ export default function EditProfilePage() {
               <p className="mt-2 text-sm text-red-600">{errors.username}</p>
             )}
             {formData.username !== currentUser?.username && (
-              <p className="mt-2 text-xs text-amber-600">⚠️ 사용자명을 변경하면 프로필 주소가 바뀝니다.</p>
+              <p className="mt-2 text-xs text-amber-600">⚠️ 닉네임을 변경하면 프로필 주소가 바뀝니다.</p>
             )}
           </div>
 
-          {/* 표시명 */}
-          <div>
-            <label
-              htmlFor="displayName"
-              className="block text-caption text-muted mb-3 font-medium"
-            >
-              표시명 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="displayName"
-              name="displayName"
-              value={formData.displayName}
-              onChange={handleInputChange}
-              placeholder="표시명을 입력하세요"
-              className={`w-full px-4 py-4 text-body border-2 bg-surface text-foreground placeholder-muted rounded-lg focus:outline-none transition-gentle focus-ring ${
-                errors.displayName ? 'border-red-300' : 'border-accent focus:border-primary'
-              }`}
-              style={{ minHeight: '44px' }}
-              required
-              disabled={isSubmitting}
-            />
-            {errors.displayName && (
-              <p className="mt-2 text-sm text-red-600">{errors.displayName}</p>
-            )}
-          </div>
 
           {/* 한 줄 소개 */}
           <div>

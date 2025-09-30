@@ -2,8 +2,7 @@
 
 export interface User {
   id: string;
-  username: string;        // @username (unique identifier)
-  displayName: string;     // 표시되는 이름
+  username: string;        // @username (unique identifier, also used for display)
   bio: string;            // 한 줄 소개
   avatar: string;         // 아바타 이미지 (기본값: "default")
   createdAt: string;      // 생성일
@@ -13,7 +12,6 @@ export interface User {
 
 export interface CreateUserData {
   username: string;
-  displayName: string;
   bio?: string;
   isPrivate?: boolean;
   allowFollow?: boolean;
@@ -21,7 +19,6 @@ export interface CreateUserData {
 
 export interface UpdateUserData {
   username?: string;
-  displayName?: string;
   bio?: string;
   avatar?: string;
   isPrivate?: boolean;
@@ -32,9 +29,9 @@ export interface UpdateUserData {
 export interface AuthUser {
   id: string;
   username: string;
-  displayName: string;
   email?: string;
   avatarUrl?: string;
+  bio?: string;
 }
 
 export interface LoginCredentials {
@@ -46,14 +43,12 @@ export interface SignupData {
   email: string;
   password: string;
   username: string;
-  displayName: string;
   bio?: string;
 }
 
 // OAuth 로그인 데이터
 export interface OAuthSignupData {
   username: string;
-  displayName: string;
   bio?: string;
 }
 

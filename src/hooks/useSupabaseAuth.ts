@@ -132,7 +132,7 @@ export function useSupabaseAuth() {
         if (!usernameExists) {
           return {
             data: null,
-            error: { message: '존재하지 않는 사용자명입니다.' }
+            error: { message: '존재하지 않는 닉네임입니다.' }
           }
         }
 
@@ -200,26 +200,6 @@ export function useSupabaseAuth() {
     }
   }
 
-  // 사용자명 중복 체크
-  const checkUsernameAvailability = async (username: string) => {
-    try {
-      const { data, error } = await supabase()
-        .from('profiles')
-        .select('username')
-        .eq('username', username)
-
-      if (error) {
-        console.error('Error checking username:', error)
-        return { available: false, error }
-      }
-
-      // data가 빈 배열이면 사용 가능, 데이터가 있으면 사용 불가
-      return { available: !data || data.length === 0, error: null }
-    } catch (error) {
-      console.error('Error checking username:', error)
-      return { available: false, error }
-    }
-  }
 
   return {
     ...authState,
@@ -229,6 +209,5 @@ export function useSupabaseAuth() {
     signInWithGoogle,
     // signInWithKakao, // TODO: 추후 업데이트 예정
     signOut,
-    checkUsernameAvailability
   }
 }

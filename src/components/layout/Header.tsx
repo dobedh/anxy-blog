@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useScrollEffect } from '@/hooks/useScrollEffect';
+import { useRouter, useSearchParams } from 'next/navigation';
 import LoginModal from '@/components/ui/LoginModal';
 import SignupModal from '@/components/ui/SignupModal';
 
@@ -12,13 +13,46 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isScrolled = useScrollEffect(10);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // 인증 상태 변경 시 메뉴 닫기 (혼동 방지)
   useEffect(() => {
     setIsMenuOpen(false);
   }, [isAuthenticated]);
+
+  // URL 파라미터에서 검색어 초기화
+  useEffect(() => {
+    const query = searchParams.get('q');
+    if (query) {
+      setSearchTerm(query);
+    }
+  }, [searchParams]);
+
+  // 검색 처리
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/?q=${encodeURIComponent(searchTerm.trim())}`);
+    } else {
+      router.push('/');
+    }
+  };
+
+  // 검색어 변경 처리
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // 검색어 초기화
+  const handleSearchClear = () => {
+    setSearchTerm('');
+    router.push('/');
+  };
+
 
   // 메뉴 외부 클릭 핸들러 최적화
   const handleClickOutside = useCallback((event: MouseEvent) => {
@@ -124,7 +158,7 @@ export default function Header() {
                           </div>
                           <div>
                             <p className="text-base font-medium text-gray-900">
-                              {currentUser?.displayName}
+                              {currentUser?.username}
                             </p>
                           </div>
                         </Link>
@@ -283,11 +317,13 @@ export default function Header() {
 
           {/* Search Bar - Responsive positioned */}
           <div className="flex-1 min-w-0 max-w-sm mx-3">
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
               <input
                 type="text"
                 placeholder="Search"
-                className="w-full pl-8 lg:pl-10 pr-3 lg:pr-4 py-1.5 lg:py-2 text-sm text-gray-700 bg-gray-100/30 rounded-full focus:outline-none focus:bg-gray-100/50 placeholder-gray-500"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="w-full pl-8 lg:pl-10 pr-8 lg:pr-10 py-1.5 lg:py-2 text-sm text-gray-700 bg-gray-100/30 rounded-full focus:outline-none focus:bg-gray-100/50 placeholder-gray-500"
               />
               <svg
                 className="absolute left-2 lg:left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
@@ -302,7 +338,19 @@ export default function Header() {
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-            </div>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={handleSearchClear}
+                  className="absolute right-2 lg:right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600"
+                  aria-label="Clear search"
+                >
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </form>
           </div>
         </div>
 

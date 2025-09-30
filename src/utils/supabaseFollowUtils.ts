@@ -28,9 +28,9 @@ export async function followUser(followerId: string, followingId: string): Promi
       .select('id')
       .eq('follower_id', followerId)
       .eq('following_id', followingId)
-      .single();
+      .maybeSingle();
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError) {
       console.error('Error checking existing follow:', checkError);
       return { success: false, error: '팔로우 상태 확인에 실패했습니다.' };
     }
@@ -88,9 +88,9 @@ export async function checkFollowStatus(followerId: string, followingId: string)
       .select('id')
       .eq('follower_id', followerId)
       .eq('following_id', followingId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
       console.error('Error checking follow status:', error);
       return false;
     }
@@ -171,7 +171,6 @@ export async function getFollowers(
     const followers: User[] = profiles?.map(profile => ({
       id: profile.id,
       username: profile.username,
-      displayName: profile.display_name,
       bio: profile.bio || '',
       avatar: profile.avatar_url || 'default',
       createdAt: profile.created_at,
@@ -228,7 +227,6 @@ export async function getFollowing(
     const following: User[] = profiles?.map(profile => ({
       id: profile.id,
       username: profile.username,
-      displayName: profile.display_name,
       bio: profile.bio || '',
       avatar: profile.avatar_url || 'default',
       createdAt: profile.created_at,

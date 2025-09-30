@@ -26,7 +26,7 @@ export default function FollowButton({
   // 팔로우 상태 확인
   useEffect(() => {
     const checkFollow = async () => {
-      if (currentUser && targetUserId) {
+      if (currentUser && targetUserId && currentUser.id !== targetUserId) {
         const followStatus = await checkFollowStatus(currentUser.id, targetUserId);
         setIsFollowingUser(followStatus);
       }
