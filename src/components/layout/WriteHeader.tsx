@@ -37,7 +37,7 @@ export default function WriteHeader({ onSave, isSubmitting, isSaved, lastSaved }
           </Link>
           {lastSaved && (
             <span className="text-sm text-gray-400 transition-gentle">
-              임시저장됨 {formatSaveTime(lastSaved)}
+              임시저장됨
             </span>
           )}
           {!lastSaved && isSaved && (

@@ -134,31 +134,23 @@ function WritePageContent() {
     return () => clearTimeout(timeoutId);
   }, [formData, currentUser, saveDraft]);
 
-  // 페이지 마운트 시 임시저장본 복원
+  // 페이지 마운트 시 임시저장본 자동 복원
   useEffect(() => {
     if (!currentUser) return;
 
     const draft = loadDraft();
 
     if (draft) {
-      // 사용자에게 복원 여부 확인
-      const shouldRestore = window.confirm(
-        `저장되지 않은 임시 저장본이 있습니다.\n복원하시겠습니까?\n\n마지막 저장: ${new Date(draft.savedAt).toLocaleString('ko-KR')}`
-      );
-
-      if (shouldRestore) {
-        setFormData({
-          title: draft.title,
-          content: draft.content,
-          isAnonymous: draft.isAnonymous || false,
-          isPrivate: draft.isPrivate || false,
-        });
-        setLastSaved(new Date(draft.savedAt));
-      } else {
-        clearDraft();
-      }
+      // 자동으로 복원 (확인 메시지 없이)
+      setFormData({
+        title: draft.title,
+        content: draft.content,
+        isAnonymous: draft.isAnonymous || false,
+        isPrivate: draft.isPrivate || false,
+      });
+      setLastSaved(new Date(draft.savedAt));
     }
-  }, [currentUser, loadDraft, clearDraft]);
+  }, [currentUser, loadDraft]);
 
   return (
     <div className="min-h-screen bg-white">
