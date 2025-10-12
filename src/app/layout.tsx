@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import ConditionalHeader from "@/components/layout/ConditionalHeader";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 // useSearchParams Suspense boundary 에러 해결을 위해 전체 앱을 dynamic rendering으로 설정
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,9 @@ export default function RootLayout({
           <main className="pt-16">
             {children}
           </main>
+          {process.env.NEXT_PUBLIC_GA_ID && (
+            <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          )}
       </body>
     </html>
   );
