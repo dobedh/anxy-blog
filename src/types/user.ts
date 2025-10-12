@@ -1,4 +1,4 @@
-// User-related types and interfaces for Anxy blog platform
+// User-related types and interfaces for Anxy note platform
 
 export interface User {
   id: string;

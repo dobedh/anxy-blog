@@ -1,4 +1,4 @@
-// Post-related types for Anxy blog platform
+// Post-related types for Anxy note platform
 
 export type PostVisibility = 'public' | 'followers' | 'private';
 
