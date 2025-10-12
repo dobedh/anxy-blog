@@ -277,10 +277,10 @@ export default function PostPage({ params }: PostPageProps) {
       ];
 
   return (
-    <div className="content-container space-2xl pt-64">
+    <div className="max-w-4xl mx-auto px-6 py-8 pt-24">
       {/* 1. Title */}
-      <div className="mb-8 mt-32">
-        <h1 className="text-hero font-bold text-foreground leading-tight">
+      <div className="mb-6">
+        <h1 className="text-2xl lg:text-4xl font-bold text-foreground leading-tight">
           {post.title}
         </h1>
       </div>
@@ -337,9 +337,9 @@ export default function PostPage({ params }: PostPageProps) {
       <div className="border-t border-gray-200 mb-6"></div>
 
       {/* 4. Main content */}
-      <div className="max-w-4xl mb-12">
-        <div className="prose prose-lg max-w-none">
-          <div className="text-body text-foreground leading-relaxed whitespace-pre-wrap">
+      <div className="mb-12">
+        <div className="prose max-w-none">
+          <div className="text-base lg:text-lg text-foreground leading-relaxed whitespace-pre-wrap">
             {post.content}
           </div>
         </div>
