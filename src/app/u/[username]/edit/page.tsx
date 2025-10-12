@@ -18,7 +18,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
-  const username = use(params).username;
+  const username = decodeURIComponent(use(params).username);
 
   // 인증 상태 확인 - 타이머 기반 보호
   useEffect(() => {

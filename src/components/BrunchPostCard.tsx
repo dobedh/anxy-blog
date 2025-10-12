@@ -3,16 +3,25 @@ import { Post } from '@/types/post';
 import { useState, useEffect } from 'react';
 import { togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
 import { useAuth } from '@/hooks/useAuth';
+import LoginModal from '@/components/ui/LoginModal';
+import SignupModal from '@/components/ui/SignupModal';
 
 interface BrunchPostCardProps {
   post: Post;
 }
 
 export default function BrunchPostCard({ post }: BrunchPostCardProps) {
-  const { id, title, excerpt, author, date } = post;
+  const { id, title, excerpt, author, date, postNumber, authorId } = post;
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const { currentUser, isAuthenticated } = useAuth();
+
+  // Generate post URL - prefer short URL if available
+  const postUrl = (postNumber && author && !post.isAnonymous)
+    ? `/u/${author}/${postNumber}`
+    : `/post/${id}`;
 
   useEffect(() => {
     const checkLikedStatus = async () => {
@@ -32,7 +41,7 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
 
   const handleLike = async () => {
     if (!isAuthenticated || !currentUser) {
-      // TODO: Show login prompt or redirect to login
+      setIsLoginModalOpen(true);
       return;
     }
 
@@ -59,7 +68,7 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
         {/* Content Section - Left */}
         <div className="flex-1">
           {/* Content */}
-          <Link href={`/post/${id}`} className="block">
+          <Link href={postUrl} className="block">
             <h2 className="text-lg text-gray-900 mb-2 group-hover:text-gray-700 transition-colors leading-tight line-clamp-2 font-medium">
               {title}
             </h2>
@@ -79,7 +88,7 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
             {/* Like button */}
             <button
               onClick={handleLike}
-              disabled={isLoading || !isAuthenticated}
+              disabled={isLoading}
               className="p-2 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={isLiked ? "Unlike" : "Like"}
             >
@@ -101,6 +110,26 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
         </div>
 
       </div>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSwitchToSignup={() => {
+          setIsLoginModalOpen(false);
+          setIsSignupModalOpen(true);
+        }}
+      />
+
+      {/* Signup Modal */}
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onSwitchToLogin={() => {
+          setIsSignupModalOpen(false);
+          setIsLoginModalOpen(true);
+        }}
+      />
     </article>
   );
 }

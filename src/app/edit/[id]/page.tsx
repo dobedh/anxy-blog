@@ -69,7 +69,11 @@ function EditPageContent({ postId }: { postId: string }) {
         if (postData.authorId !== currentUser.id) {
           console.log('❌ Permission denied: not post owner');
           alert('이 글을 수정할 권한이 없습니다.');
-          router.push(`/post/${postId}`);
+          // Generate post URL - prefer short URL if available
+          const postUrl = (postData.postNumber && postData.author && !postData.isAnonymous)
+            ? `/u/${postData.author}/${postData.postNumber}`
+            : `/post/${postId}`;
+          router.push(postUrl);
           return;
         }
 
@@ -134,7 +138,11 @@ function EditPageContent({ postId }: { postId: string }) {
       if (result.success) {
         setIsSaved(true);
         setTimeout(() => {
-          router.push(`/post/${postId}`);
+          // Generate post URL - prefer short URL if available
+          const postUrl = (post!.postNumber && post!.author && !post!.isAnonymous)
+            ? `/u/${post!.author}/${post!.postNumber}`
+            : `/post/${postId}`;
+          router.push(postUrl);
         }, 1000);
       } else {
         alert(result.error || '글 수정 중 오류가 발생했습니다.');

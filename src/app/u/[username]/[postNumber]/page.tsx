@@ -4,19 +4,18 @@ import { useEffect, useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Post, PostVisibility } from '@/types/post';
-import { getPostById, deletePost, togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
+import { getPostByUsernameAndNumber, deletePost, togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
 import { Comment } from '@/types/comment';
 import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
 import { useAuth } from '@/hooks/useAuth';
 import DropdownMenu from '@/components/ui/DropdownMenu';
 import FollowButton from '@/components/FollowButton';
-import { getUserById } from '@/utils/supabaseUserUtils';
 import { useRouter } from 'next/navigation';
 import LoginModal from '@/components/ui/LoginModal';
 import SignupModal from '@/components/ui/SignupModal';
 
 interface PostPageProps {
-  params: { id: string };
+  params: { username: string; postNumber: string };
 }
 
 export default function PostPage({ params }: PostPageProps) {
@@ -27,7 +26,6 @@ export default function PostPage({ params }: PostPageProps) {
   const [commentCount, setCommentCount] = useState(0);
   const [commentInput, setCommentInput] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [authorUsername, setAuthorUsername] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const [currentLikeCount, setCurrentLikeCount] = useState(0);
@@ -37,7 +35,9 @@ export default function PostPage({ params }: PostPageProps) {
   const { currentUser, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const postId = use(params).id;
+  const unwrappedParams = use(params);
+  const username = decodeURIComponent(unwrappedParams.username);
+  const postNumber = parseInt(unwrappedParams.postNumber, 10);
 
   // Visibility label helper
   const getVisibilityLabel = (visibility: PostVisibility): string => {
@@ -53,57 +53,41 @@ export default function PostPage({ params }: PostPageProps) {
     const loadPost = async () => {
       setIsLoading(true);
 
-      console.log('Loading post with ID:', postId);
+      console.log('Loading post with username:', username, 'postNumber:', postNumber);
 
-      // Load post from Supabase
-      const postData = await getPostById(postId);
+      // Load post from Supabase using username and postNumber
+      const postData = await getPostByUsernameAndNumber(username, postNumber);
 
       if (!postData) {
-        console.log('Post not found:', postId);
+        console.log('Post not found:', username, postNumber);
         notFound();
         return;
       }
 
       console.log('Post found:', postData);
-
-      // Redirect to short URL if available
-      if (postData.postNumber && postData.author && !postData.isAnonymous) {
-        const shortUrl = `/u/${postData.author}/${postData.postNumber}`;
-        console.log('Redirecting to short URL:', shortUrl);
-        router.replace(shortUrl);
-        return;
-      }
-
       setPost(postData);
       setIsLoading(false);
     };
 
-    loadPost();
-  }, [postId, router]);
-
-  // 작성자 username 로드
-  useEffect(() => {
-    const loadAuthorUsername = async () => {
-      if (post?.authorId) {
-        const author = await getUserById(post.authorId);
-        setAuthorUsername(author?.username || null);
-      }
-    };
-    loadAuthorUsername();
-  }, [post?.authorId]);
+    if (!isNaN(postNumber)) {
+      loadPost();
+    } else {
+      notFound();
+    }
+  }, [username, postNumber]);
 
   useEffect(() => {
-    if (postId) {
+    if (post?.id) {
       const loadComments = () => {
-        const postComments = getCommentsByPostId(postId);
-        const count = getCommentCount(postId);
+        const postComments = getCommentsByPostId(post.id.toString());
+        const count = getCommentCount(post.id.toString());
         setComments(postComments);
         setCommentCount(count);
       };
 
       loadComments();
     }
-  }, [postId]);
+  }, [post?.id]);
 
   // 좋아요 상태 및 카운트 초기화
   useEffect(() => {
@@ -224,7 +208,7 @@ export default function PostPage({ params }: PostPageProps) {
 
     try {
       const result = createComment(
-        { content: commentInput, postId },
+        { content: commentInput, postId: post!.id.toString() },
         currentUser.id,
         currentUser.username
       );
@@ -232,8 +216,8 @@ export default function PostPage({ params }: PostPageProps) {
       if (result.success) {
         setCommentInput('');
         // Reload comments
-        const postComments = getCommentsByPostId(postId);
-        const count = getCommentCount(postId);
+        const postComments = getCommentsByPostId(post!.id.toString());
+        const count = getCommentCount(post!.id.toString());
         setComments(postComments);
         setCommentCount(count);
       } else {
@@ -277,9 +261,9 @@ export default function PostPage({ params }: PostPageProps) {
       ];
 
   return (
-    <div className="content-container space-2xl pt-64">
+    <div className="content-container py-32 pb-32">
       {/* 1. Title */}
-      <div className="mb-8 mt-32">
+      <div className="mb-8 mt-4">
         <h1 className="text-hero font-bold text-foreground leading-tight">
           {post.title}
         </h1>
@@ -289,17 +273,13 @@ export default function PostPage({ params }: PostPageProps) {
       <div className="flex items-center gap-4 mb-6">
         {/* Left section: Author + Follow button */}
         <div className="flex items-center gap-4">
-          {authorUsername ? (
-            <Link
-              href={`/u/${authorUsername}`}
-              className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-gentle cursor-pointer focus-ring rounded-md px-1 -mx-1"
-              aria-label={`${post.author}님의 프로필 보기`}
-            >
-              {post.author}
-            </Link>
-          ) : (
-            <span className="text-lg font-medium text-gray-900">{post.author}</span>
-          )}
+          <Link
+            href={`/u/${username}`}
+            className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-gentle cursor-pointer focus-ring rounded-md px-1 -mx-1"
+            aria-label={`${post.author}님의 프로필 보기`}
+          >
+            {post.author}
+          </Link>
           {post.authorId && !isOwner && (
             <FollowButton
               targetUserId={post.authorId}

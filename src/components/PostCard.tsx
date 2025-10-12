@@ -7,8 +7,14 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post }: PostCardProps) {
-  const { id, title, excerpt, author, date, likes } = post;
+  const { id, title, excerpt, author, date, likes, postNumber } = post;
   const commentCount = getCommentCount(id);
+
+  // Generate post URL - prefer short URL if available
+  const postUrl = (postNumber && author && !post.isAnonymous)
+    ? `/u/${author}/${postNumber}`
+    : `/post/${id}`;
+
   return (
     <article className="py-8 border-b border-gray-200 last:border-b-0 group">
       {/* Meta Information */}
@@ -17,9 +23,9 @@ export default function PostCard({ post }: PostCardProps) {
         <span>·</span>
         <time>{date}</time>
       </div>
-      
+
       {/* Content */}
-      <Link href={`/post/${id}`} className="block">
+      <Link href={postUrl} className="block">
         <h2 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-gray-700 transition-colors leading-tight line-clamp-2">
           {title}
         </h2>

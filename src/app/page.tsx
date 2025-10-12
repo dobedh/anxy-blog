@@ -81,22 +81,11 @@ export default function Home() {
       ) : (
         /* Posts Section */
         allPosts.length > 0 ? (
-          <>
-            <div className="space-y-0">
-              {allPosts.map((post) => (
-                <BrunchPostCard key={post.id} post={post} />
-              ))}
-            </div>
-
-            {/* Load More */}
-            {!searchTerm && (
-              <div className="text-center mt-12">
-                <button className="text-gray-400 text-sm hover:text-gray-600 transition-colors">
-                  더 보기
-                </button>
-              </div>
-            )}
-          </>
+          <div className="space-y-0">
+            {allPosts.map((post) => (
+              <BrunchPostCard key={post.id} post={post} />
+            ))}
+          </div>
         ) : (
           // Empty State
           <div className="py-16 text-center">

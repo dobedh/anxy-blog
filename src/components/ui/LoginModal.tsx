@@ -176,7 +176,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
           </h2>
           {!showEmailForm && (
             <p className="text-sm text-gray-600">
-              불안할때 쓰는 글
+              불안할 때 쓰는 노트
             </p>
           )}
         </div>

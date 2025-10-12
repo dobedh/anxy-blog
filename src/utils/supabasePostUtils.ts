@@ -4,7 +4,7 @@ import { Post, CreatePostData, UpdatePostData, PostFilters, PostSortOption } fro
 import { getUserById } from './supabaseUserUtils';
 
 // Supabase Post를 Post 타입으로 변환
-export function convertSupabasePostToPost(supabasePost: SupabasePost): Post {
+export function convertSupabasePostToPost(supabasePost: any): Post {
   return {
     id: supabasePost.id,
     title: supabasePost.title,
@@ -13,6 +13,7 @@ export function convertSupabasePostToPost(supabasePost: SupabasePost): Post {
     author: supabasePost.author_name,
     authorId: supabasePost.author_id || undefined,
     authorName: supabasePost.author_name,
+    postNumber: supabasePost.post_number || undefined,
     date: formatDate(supabasePost.created_at),
     createdAt: supabasePost.created_at,
     updatedAt: supabasePost.updated_at,
@@ -502,3 +503,47 @@ export async function getUserLikedPosts(
   }
 }
 
+// username과 post_number로 글 조회 (짧은 URL용)
+export async function getPostByUsernameAndNumber(username: string, postNumber: number): Promise<Post | undefined> {
+  try {
+    // 1. username으로 author_id 조회
+    const { data: profile, error: profileError } = await supabase()
+      .from('profiles')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      return undefined;
+    }
+
+    if (!profile) {
+      console.log('Profile not found for username:', username);
+      return undefined;
+    }
+
+    // 2. author_id와 post_number로 글 조회
+    const { data: post, error } = await supabase()
+      .from('posts')
+      .select('*')
+      .eq('author_id', profile.id)
+      .eq('post_number', postNumber)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching post by username and number:', error);
+      return undefined;
+    }
+
+    if (!post) {
+      console.log('Post not found for username:', username, 'postNumber:', postNumber);
+      return undefined;
+    }
+
+    return convertSupabasePostToPost(post);
+  } catch (error) {
+    console.error('Error getting post by username and number:', error);
+    return undefined;
+  }
+}

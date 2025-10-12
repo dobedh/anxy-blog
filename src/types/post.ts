@@ -10,6 +10,7 @@ export interface Post {
   author: string;          // 기존 필드 (호환성 유지)
   authorId?: string;       // 새로운 필드 - 사용자 ID 참조
   authorName?: string;     // 표시용 작성자 이름
+  postNumber?: number;     // 사용자별 글 번호 (URL 단축용)
   date: string;
   createdAt?: string;      // ISO 날짜 형식
   updatedAt?: string;      // 수정일
