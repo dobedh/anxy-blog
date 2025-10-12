@@ -3,6 +3,7 @@ import { useSupabaseAuth } from './useSupabaseAuth';
 import { getSupabaseClient } from '@/lib/supabase';
 import { checkUsernameAvailability as supabaseCheckUsername } from '@/utils/supabaseUserUtils';
 import { LoginCredentials, SignupData, AuthUser, OAuthSignupData } from '@/types/user';
+import { checkRateLimit, resetRateLimit, RATE_LIMITS } from '@/utils/rateLimiter';
 
 interface UseAuthReturn {
   // 상태
@@ -30,6 +31,7 @@ export function useAuth(): UseAuthReturn {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [userLoading, setUserLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Supabase User를 AuthUser로 변환 (완전한 클라이언트 사이드 실행)
   useEffect(() => {
@@ -85,25 +87,50 @@ export function useAuth(): UseAuthReturn {
         } finally {
           setUserLoading(false);
           setIsReady(true);
+          if (isInitialLoad) {
+            setIsInitialLoad(false);
+          }
         }
       } else {
         // 사용자가 없으면 즉시 상태 정리
         setCurrentUser(null);
         setUserLoading(false);
         setIsReady(true);
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
       }
     };
 
     convertUser();
-  }, [user, loading]);
+  }, [user?.id, loading]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
+      // Rate limit check: 10 attempts / 15 minutes
+      const rateLimitKey = `login:${credentials.email}`;
+      const rateLimit = checkRateLimit(
+        rateLimitKey,
+        RATE_LIMITS.LOGIN.limit,
+        RATE_LIMITS.LOGIN.windowMs
+      );
+
+      if (!rateLimit.allowed) {
+        const minutes = Math.ceil((rateLimit.retryAfter || 0) / 60);
+        return {
+          success: false,
+          error: `로그인 시도 횟수를 초과했습니다. ${minutes}분 후 다시 시도해주세요.`,
+        };
+      }
+
       const { data, error } = await signInWithEmailOrUsername(credentials.email, credentials.password);
 
       if (error) {
         return { success: false, error: error.message || '로그인에 실패했습니다.' };
       }
+
+      // Reset rate limit on successful login
+      resetRateLimit(rateLimitKey);
 
       return { success: true };
     } catch (error) {
@@ -114,12 +141,27 @@ export function useAuth(): UseAuthReturn {
 
   const signup = useCallback(async (data: SignupData) => {
     try {
+      // Rate limit check: 3 attempts / 1 hour
+      const rateLimitKey = `signup:${data.email}`;
+      const rateLimit = checkRateLimit(
+        rateLimitKey,
+        RATE_LIMITS.SIGNUP.limit,
+        RATE_LIMITS.SIGNUP.windowMs
+      );
+
+      if (!rateLimit.allowed) {
+        const minutes = Math.ceil((rateLimit.retryAfter || 0) / 60);
+        return {
+          success: false,
+          error: `회원가입 시도 횟수를 초과했습니다. ${minutes}분 후 다시 시도해주세요.`,
+        };
+      }
+
       // 닉네임 중복 체크
       const available = await supabaseCheckUsername(data.username);
       if (!available) {
         return { success: false, error: '이미 사용 중인 닉네임입니다.' };
       }
-
 
       const { data: authData, error } = await signUp(
         data.email,
@@ -133,6 +175,9 @@ export function useAuth(): UseAuthReturn {
       if (error) {
         return { success: false, error: error.message || '회원가입에 실패했습니다.' };
       }
+
+      // Reset rate limit on successful signup
+      resetRateLimit(rateLimitKey);
 
       return { success: true };
     } catch (error) {
@@ -151,6 +196,22 @@ export function useAuth(): UseAuthReturn {
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
+      // Rate limit check: 5 attempts / 5 minutes
+      const rateLimitKey = 'oauth:google';
+      const rateLimit = checkRateLimit(
+        rateLimitKey,
+        RATE_LIMITS.OAUTH.limit,
+        RATE_LIMITS.OAUTH.windowMs
+      );
+
+      if (!rateLimit.allowed) {
+        const minutes = Math.ceil((rateLimit.retryAfter || 0) / 60);
+        return {
+          success: false,
+          error: `OAuth 시도 횟수를 초과했습니다. ${minutes}분 후 다시 시도해주세요.`,
+        };
+      }
+
       const { data, error } = await signInWithGoogle();
 
       if (error) {
@@ -248,7 +309,7 @@ export function useAuth(): UseAuthReturn {
     // 상태 - 동기화된 상태 제공
     currentUser,
     isAuthenticated: isReady && !!user && !!currentUser, // 모든 상태가 준비되고 동기화된 경우에만 true
-    isLoading: loading || userLoading || !isReady, // 모든 로딩 상태를 통합
+    isLoading: loading || userLoading || (isReady && !!user && !currentUser), // user는 있으나 currentUser가 아직 로드 안 된 경우도 로딩 중으로 처리
 
     // 액션
     login,

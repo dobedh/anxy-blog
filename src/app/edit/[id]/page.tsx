@@ -3,10 +3,11 @@
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { notFound } from 'next/navigation';
-import { Post } from '@/types/post';
+import { Post, PostVisibility } from '@/types/post';
 import { getPostById, updatePost } from '@/utils/supabasePostUtils';
 import { useAuth } from '@/hooks/useAuth';
 import WriteHeader from '@/components/layout/WriteHeader';
+import VisibilityModal from '@/components/ui/VisibilityModal';
 
 interface EditPostPageProps {
   params: { id: string };
@@ -19,9 +20,11 @@ function EditPageContent({ postId }: { postId: string }) {
   const [postLoading, setPostLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showVisibilityModal, setShowVisibilityModal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
+    visibility: 'public' as PostVisibility,
   });
 
   // Load post data
@@ -63,6 +66,7 @@ function EditPageContent({ postId }: { postId: string }) {
         setFormData({
           title: postData.title,
           content: postData.content,
+          visibility: postData.visibility,
         });
       } catch (error) {
         console.error('Error loading post:', error);
@@ -81,7 +85,7 @@ function EditPageContent({ postId }: { postId: string }) {
     setIsSaved(false); // Mark as unsaved when content changes
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!currentUser || !post) {
       alert('로그인이 필요합니다.');
       return;
@@ -97,6 +101,12 @@ function EditPageContent({ postId }: { postId: string }) {
       return;
     }
 
+    // 공개 범위 선택 모달 표시
+    setShowVisibilityModal(true);
+  };
+
+  const handleVisibilitySelect = async (visibility: PostVisibility) => {
+    setShowVisibilityModal(false);
     setIsSubmitting(true);
 
     try {
@@ -104,9 +114,10 @@ function EditPageContent({ postId }: { postId: string }) {
         title: formData.title.trim(),
         content: formData.content.trim(),
         excerpt: formData.content.trim().slice(0, 150) + (formData.content.trim().length > 150 ? '...' : ''),
+        visibility,
       };
 
-      const result = await updatePost(postId, updates, currentUser.id);
+      const result = await updatePost(postId, updates, currentUser!.id);
 
       if (result.success) {
         setIsSaved(true);
@@ -167,6 +178,14 @@ function EditPageContent({ postId }: { postId: string }) {
           className="w-full min-h-screen text-lg leading-relaxed text-gray-700 placeholder-gray-400 border-0 outline-none focus:outline-none resize-none"
         />
       </div>
+
+      {/* Visibility Modal */}
+      <VisibilityModal
+        isOpen={showVisibilityModal}
+        onClose={() => setShowVisibilityModal(false)}
+        onSelect={handleVisibilitySelect}
+        currentVisibility={formData.visibility}
+      />
     </div>
   );
 }

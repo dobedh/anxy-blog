@@ -1,5 +1,7 @@
 // Post-related types for Anxy blog platform
 
+export type PostVisibility = 'public' | 'followers' | 'private';
+
 export interface Post {
   id: number | string;
   title: string;
@@ -14,7 +16,7 @@ export interface Post {
   likes: number;
   comments: number;
   isAnonymous?: boolean;   // 익명 글 여부
-  isPrivate?: boolean;     // 비공개 글 여부
+  visibility: PostVisibility;  // 공개 범위: public(전체 공개), followers(팔로워 공개), private(비공개)
   thumbnail?: string;      // 썸네일 이미지 URL
   thumbnailAlt?: string;   // 썸네일 이미지 설명 (접근성)
 }
@@ -24,7 +26,7 @@ export interface CreatePostData {
   title: string;
   content: string;
   isAnonymous?: boolean;
-  isPrivate?: boolean;
+  visibility?: PostVisibility;  // 공개 범위 (기본값: 'public')
 }
 
 // 임시저장용 인터페이스
@@ -38,13 +40,13 @@ export interface UpdatePostData {
   title?: string;
   content?: string;
   isAnonymous?: boolean;
-  isPrivate?: boolean;
+  visibility?: PostVisibility;
 }
 
 // 글 목록 필터링용
 export interface PostFilters {
   authorId?: string;
-  isPrivate?: boolean;
+  visibility?: PostVisibility;  // 특정 공개 범위 필터링
   searchTerm?: string;
 }
 

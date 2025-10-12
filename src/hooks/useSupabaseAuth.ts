@@ -2,11 +2,74 @@ import { useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { isEmailFormat, checkUsernameExists } from '@/utils/supabaseUserUtils'
+import { logger } from '@/lib/logger'
 
 export interface AuthState {
   user: User | null
   session: Session | null
   loading: boolean
+}
+
+/**
+ * OAuth redirect URL 검증
+ * Open redirect 공격 방지를 위한 origin 화이트리스트 검증
+ */
+function getValidatedRedirectUrl(): string {
+  // 서버 사이드에서는 기본 URL 반환
+  if (typeof window === 'undefined') {
+    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  }
+
+  const currentOrigin = window.location.origin;
+
+  // 환경변수에서 허용된 origin 목록 가져오기
+  const allowedOrigins = (process.env.NEXT_PUBLIC_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  // 기본 허용 URL (환경변수가 없을 경우 fallback)
+  const defaultAllowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.NEXT_PUBLIC_APP_URL,
+  ].filter(Boolean) as string[];
+
+  const finalAllowedOrigins = allowedOrigins.length > 0
+    ? allowedOrigins
+    : defaultAllowedOrigins;
+
+  // 현재 origin이 화이트리스트에 있는지 확인
+  const isOriginAllowed = finalAllowedOrigins.some(allowedOrigin => {
+    // Vercel preview deployments 지원 (와일드카드 패턴)
+    if (allowedOrigin.includes('*')) {
+      const pattern = allowedOrigin.replace(/\*/g, '.*').replace(/\./g, '\\.');
+      const regex = new RegExp(`^${pattern}$`);
+      return regex.test(currentOrigin);
+    }
+    return currentOrigin === allowedOrigin;
+  });
+
+  // 검증 통과 시 현재 origin 사용, 실패 시 기본 URL 사용
+  if (isOriginAllowed) {
+    logger.debug({
+      context: 'redirectValidation',
+      metadata: { origin: currentOrigin, validated: true }
+    });
+    return `${currentOrigin}/auth/callback`;
+  } else {
+    // 검증 실패 시 경고 로그 및 안전한 기본 URL 사용
+    logger.warn({
+      context: 'redirectValidation',
+      metadata: {
+        origin: currentOrigin,
+        validated: false,
+        reason: 'origin_not_in_whitelist'
+      }
+    });
+    const fallbackUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    return `${fallbackUrl}/auth/callback`;
+  }
 }
 
 export function useSupabaseAuth() {
@@ -19,26 +82,29 @@ export function useSupabaseAuth() {
   useEffect(() => {
     // 클라이언트 사이드에서만 실행
     if (typeof window === 'undefined') {
-      console.log('⏳ Server-side render, skipping auth initialization');
+      logger.debug({ context: 'authInit', metadata: { ssr: true } });
       return;
     }
 
     // 현재 세션 가져기기
     const getSession = async () => {
       try {
-        console.log('🔄 Getting current session...');
+        logger.debug({ context: 'getSession', metadata: { status: 'fetching' } });
         const { data: { session }, error } = await supabase().auth.getSession()
         if (error) {
-          console.error('Error getting session:', error)
+          logger.error({ context: 'getSession', error });
         }
-        console.log('✅ Session retrieved:', session ? 'authenticated' : 'not authenticated');
+        logger.debug({
+          context: 'getSession',
+          metadata: { authenticated: !!session }
+        });
         setAuthState({
           user: session?.user ?? null,
           session,
           loading: false
         })
       } catch (error) {
-        console.error('Error in getSession:', error);
+        logger.error({ context: 'getSession', error });
         setAuthState({
           user: null,
           session: null,
@@ -52,7 +118,10 @@ export function useSupabaseAuth() {
     // 인증 상태 변화 리스너
     const { data: { subscription } } = supabase().auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔄 Auth state changed:', event, session ? 'authenticated' : 'not authenticated');
+        logger.debug({
+          context: 'authStateChange',
+          metadata: { event, authenticated: !!session }
+        });
         setAuthState({
           user: session?.user ?? null,
           session,
@@ -96,9 +165,16 @@ export function useSupabaseAuth() {
       }
 
       return { data, error: null }
-    } catch (error) {
-      console.error('Error signing up:', error)
-      return { data: null, error }
+    } catch (error: any) {
+      logger.error({
+        context: 'signUp',
+        error,
+        metadata: { action: 'user_registration' }
+      });
+      return {
+        data: null,
+        error: { message: '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.' }
+      }
     }
   }
 
@@ -112,9 +188,16 @@ export function useSupabaseAuth() {
 
       if (error) throw error
       return { data, error: null }
-    } catch (error) {
-      console.error('Error signing in:', error)
-      return { data: null, error }
+    } catch (error: any) {
+      logger.error({
+        context: 'signIn',
+        error,
+        metadata: { action: 'password_login' }
+      });
+      return {
+        data: null,
+        error: { message: '이메일 또는 비밀번호가 올바르지 않습니다.' }
+      }
     }
   }
 
@@ -146,27 +229,43 @@ export function useSupabaseAuth() {
           }
         }
       }
-    } catch (error) {
-      console.error('Error signing in with email or username:', error)
-      return { data: null, error }
+    } catch (error: any) {
+      logger.error({
+        context: 'signInWithEmailOrUsername',
+        error,
+        metadata: { action: 'flexible_login' }
+      });
+      return {
+        data: null,
+        error: { message: '로그인에 실패했습니다. 입력 정보를 확인해주세요.' }
+      }
     }
   }
 
   // 구글 OAuth 로그인
   const signInWithGoogle = async () => {
     try {
+      const redirectUrl = getValidatedRedirectUrl();
+
       const { data, error } = await supabase().auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl
         }
       })
 
       if (error) throw error
       return { data, error: null }
-    } catch (error) {
-      console.error('Error signing in with Google:', error)
-      return { data: null, error }
+    } catch (error: any) {
+      logger.error({
+        context: 'signInWithGoogle',
+        error,
+        metadata: { action: 'oauth_login', provider: 'google' }
+      });
+      return {
+        data: null,
+        error: { message: '구글 로그인 중 문제가 발생했습니다.' }
+      }
     }
   }
 
@@ -194,9 +293,15 @@ export function useSupabaseAuth() {
       const { error } = await supabase().auth.signOut()
       if (error) throw error
       return { error: null }
-    } catch (error) {
-      console.error('Error signing out:', error)
-      return { error }
+    } catch (error: any) {
+      logger.error({
+        context: 'signOut',
+        error,
+        metadata: { action: 'logout' }
+      });
+      return {
+        error: { message: '로그아웃 중 문제가 발생했습니다.' }
+      }
     }
   }
 

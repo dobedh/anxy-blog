@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS posts (
   author_name TEXT NOT NULL,
   category TEXT NOT NULL,
   is_anonymous BOOLEAN DEFAULT false,
-  is_private BOOLEAN DEFAULT false,
+  visibility VARCHAR(20) DEFAULT 'public' NOT NULL,
   likes_count INTEGER DEFAULT 0,
   comments_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS posts (
 
   CONSTRAINT title_length CHECK (char_length(title) > 0),
   CONSTRAINT content_length CHECK (char_length(content) > 0),
-  CONSTRAINT category_valid CHECK (category IN ('자유', '생각', '음악', '책'))
+  CONSTRAINT category_valid CHECK (category IN ('자유', '생각', '음악', '책')),
+  CONSTRAINT visibility_valid CHECK (visibility IN ('public', 'followers', 'private'))
 );
 
 -- 3. 팔로우 관계 테이블
@@ -94,15 +95,31 @@ CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING ( auth.uid() = id );
 
+CREATE POLICY "Users can delete own profile"
+  ON profiles FOR DELETE
+  USING ( auth.uid() = id );
+
 -- Posts 정책
-CREATE POLICY "Public posts are viewable by everyone"
+CREATE POLICY "Posts visibility policy"
   ON posts FOR SELECT
-  USING ( NOT is_private OR auth.uid() = author_id );
+  USING (
+    visibility = 'public'
+    OR auth.uid() = author_id
+    OR (visibility = 'followers' AND EXISTS (
+      SELECT 1 FROM follows
+      WHERE follows.following_id = posts.author_id
+      AND follows.follower_id = auth.uid()
+    ))
+    OR (visibility = 'private' AND auth.uid() = author_id)
+  );
 
 CREATE POLICY "Authenticated users can insert posts"
   ON posts FOR INSERT
   TO authenticated
-  WITH CHECK ( auth.uid() = author_id );
+  WITH CHECK (
+    auth.uid() = author_id
+    OR (is_anonymous = true AND author_id IS NULL)
+  );
 
 CREATE POLICY "Users can update own posts"
   ON posts FOR UPDATE
@@ -115,7 +132,6 @@ CREATE POLICY "Users can delete own posts"
 -- Follows 정책
 CREATE POLICY "Anyone can view follows"
   ON follows FOR SELECT
-  TO authenticated
   USING ( true );
 
 CREATE POLICY "Users can follow others"
@@ -130,7 +146,6 @@ CREATE POLICY "Users can unfollow"
 -- Post likes 정책
 CREATE POLICY "Anyone can view likes"
   ON post_likes FOR SELECT
-  TO authenticated
   USING ( true );
 
 CREATE POLICY "Authenticated users can like posts"
@@ -145,7 +160,6 @@ CREATE POLICY "Users can unlike posts"
 -- Comments 정책
 CREATE POLICY "Anyone can view comments"
   ON comments FOR SELECT
-  TO authenticated
   USING ( true );
 
 CREATE POLICY "Authenticated users can insert comments"
@@ -226,7 +240,40 @@ CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
 CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id);
 CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_visibility ON posts(visibility);
 CREATE INDEX IF NOT EXISTS idx_follows_follower_id ON follows(follower_id);
 CREATE INDEX IF NOT EXISTS idx_follows_following_id ON follows(following_id);
 CREATE INDEX IF NOT EXISTS idx_post_likes_post_id ON post_likes(post_id);
 CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
+
+-- 마이그레이션: 기존 is_private 필드가 있다면 visibility로 변환
+-- is_private = true -> visibility = 'private'
+-- is_private = false -> visibility = 'public'
+-- 이미 테이블이 생성된 경우를 위한 마이그레이션 스크립트
+DO $$
+BEGIN
+  -- is_private 컬럼이 존재하는지 확인
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'posts' AND column_name = 'is_private'
+  ) THEN
+    -- visibility 컬럼이 없다면 추가
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'posts' AND column_name = 'visibility'
+    ) THEN
+      ALTER TABLE posts ADD COLUMN visibility VARCHAR(20) DEFAULT 'public' NOT NULL;
+      ALTER TABLE posts ADD CONSTRAINT visibility_valid CHECK (visibility IN ('public', 'followers', 'private'));
+    END IF;
+
+    -- 기존 데이터 마이그레이션
+    UPDATE posts SET visibility = CASE
+      WHEN is_private = true THEN 'private'
+      ELSE 'public'
+    END
+    WHERE visibility = 'public'; -- 이미 변환된 데이터는 건너뜀
+
+    -- is_private 컬럼 삭제
+    ALTER TABLE posts DROP COLUMN IF EXISTS is_private;
+  END IF;
+END $$;

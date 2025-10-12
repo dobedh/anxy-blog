@@ -19,7 +19,7 @@ export function convertSupabasePostToPost(supabasePost: SupabasePost): Post {
     likes: supabasePost.likes_count,
     comments: supabasePost.comments_count,
     isAnonymous: supabasePost.is_anonymous,
-    isPrivate: supabasePost.is_private,
+    visibility: supabasePost.visibility || 'public',
   };
 }
 
@@ -91,8 +91,9 @@ export async function createPost(
       excerpt: generateExcerpt(data.content),
       author_id: data.isAnonymous ? null : authorId,
       author_name: data.isAnonymous ? '익명' : author.username,
+      category: '자유', // 기본 카테고리
       is_anonymous: data.isAnonymous || false,
-      is_private: data.isPrivate || false,
+      visibility: data.visibility || 'public',
     };
 
     // DB에 저장
@@ -161,7 +162,7 @@ export async function updatePost(
       updateData.content = updates.content.trim();
       updateData.excerpt = generateExcerpt(updates.content);
     }
-    if (updates.isPrivate !== undefined) updateData.is_private = updates.isPrivate;
+    if (updates.visibility !== undefined) updateData.visibility = updates.visibility;
 
     // 업데이트 실행
     const { data: updatedPost, error } = await supabase()
@@ -243,11 +244,11 @@ export async function getPosts(
         query = query.eq('author_id', filters.authorId);
       }
 
-      if (filters.isPrivate !== undefined) {
-        query = query.eq('is_private', filters.isPrivate);
+      if (filters.visibility !== undefined) {
+        query = query.eq('visibility', filters.visibility);
       } else {
         // 기본적으로 공개 글만 조회
-        query = query.eq('is_private', false);
+        query = query.eq('visibility', 'public');
       }
 
       if (filters.searchTerm) {
@@ -256,7 +257,7 @@ export async function getPosts(
       }
     } else {
       // 기본적으로 공개 글만 조회
-      query = query.eq('is_private', false);
+      query = query.eq('visibility', 'public');
     }
 
     // 정렬
@@ -326,7 +327,7 @@ export async function getPostCountByAuthor(authorId: string): Promise<number> {
       .from('posts')
       .select('id', { count: 'exact' })
       .eq('author_id', authorId)
-      .eq('is_private', false);
+      .eq('visibility', 'public');
 
     if (error) {
       console.error('Error getting post count:', error);
@@ -348,7 +349,7 @@ export async function getPostsByAuthor(
 ): Promise<Post[]> {
   const filters: PostFilters = {
     authorId,
-    isPrivate: includePrivate ? undefined : false
+    visibility: includePrivate ? undefined : 'public'
   };
 
   return getPosts(filters, sortBy);
@@ -460,7 +461,7 @@ export async function getUserLikedPosts(
       .from('posts')
       .select('*')
       .in('id', postIds)
-      .eq('is_private', false) // 공개 글만 조회
+      .eq('visibility', 'public') // 공개 글만 조회
       .order('created_at', { ascending: false });
 
     if (postsError) {

@@ -4,19 +4,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createPost } from '@/utils/supabasePostUtils';
-import { CreatePostData, DraftPostData, POST_STORAGE_KEYS } from '@/types/post';
+import { CreatePostData, DraftPostData, POST_STORAGE_KEYS, PostVisibility } from '@/types/post';
 import WriteHeader from '@/components/layout/WriteHeader';
+import VisibilityModal from '@/components/ui/VisibilityModal';
 
 function WritePageContent() {
   const router = useRouter();
   const { currentUser } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [showVisibilityModal, setShowVisibilityModal] = useState(false);
   const [formData, setFormData] = useState<CreatePostData>({
     title: '',
     content: '',
     isAnonymous: false,
-    isPrivate: false,
+    visibility: 'public',
   });
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -79,7 +81,7 @@ function WritePageContent() {
     setIsSaved(false); // Mark as unsaved when content changes
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       return;
@@ -95,16 +97,27 @@ function WritePageContent() {
       return;
     }
 
+    // 공개 범위 선택 모달 표시
+    setShowVisibilityModal(true);
+  };
+
+  const handleVisibilitySelect = async (visibility: PostVisibility) => {
+    setShowVisibilityModal(false);
     setIsSubmitting(true);
 
     try {
-      const result = await createPost(formData, currentUser.id);
+      const postData = {
+        ...formData,
+        visibility,
+      };
+
+      const result = await createPost(postData, currentUser!.id);
 
       if (result.success) {
         clearDraft(); // 임시저장본 삭제
         setIsSaved(true);
         setTimeout(() => {
-          router.push(`/u/${currentUser.username}`);
+          router.push(`/u/${currentUser!.username}`);
         }, 1000);
       } else {
         alert(result.error || '글 발행 중 오류가 발생했습니다.');
@@ -146,7 +159,7 @@ function WritePageContent() {
         title: draft.title,
         content: draft.content,
         isAnonymous: draft.isAnonymous || false,
-        isPrivate: draft.isPrivate || false,
+        visibility: draft.visibility || 'public',
       });
       setLastSaved(new Date(draft.savedAt));
     }
@@ -178,6 +191,14 @@ function WritePageContent() {
           className="w-full min-h-screen text-lg leading-relaxed text-gray-700 placeholder-gray-400 border-0 outline-none focus:outline-none resize-none"
         />
       </div>
+
+      {/* Visibility Modal */}
+      <VisibilityModal
+        isOpen={showVisibilityModal}
+        onClose={() => setShowVisibilityModal(false)}
+        onSelect={handleVisibilitySelect}
+        currentVisibility={formData.visibility}
+      />
     </div>
   );
 }

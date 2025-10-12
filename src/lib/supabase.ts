@@ -3,24 +3,24 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 // Supabase instance cache
 let supabaseInstance: SupabaseClient | null = null
 
-// 환경변수 가져오기 - 빌드 타임에 처리
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// 개발 환경에서 환경 변수 디버깅
-if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-  console.log('🔍 Supabase Environment Check:', {
-    url_exists: !!SUPABASE_URL,
-    key_exists: !!SUPABASE_ANON_KEY,
-    url_value: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'undefined',
-  })
-}
-
 // Supabase 클라이언트 생성 함수
 export const getSupabaseClient = (): SupabaseClient => {
   // 클라이언트가 이미 있으면 반환
   if (supabaseInstance) {
     return supabaseInstance
+  }
+
+  // 환경변수 가져오기 - 함수 내부에서 동적으로 읽기 (HMR 대응)
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // 개발 환경에서 환경 변수 디버깅
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('🔍 Supabase Environment Check:', {
+      url_exists: !!SUPABASE_URL,
+      key_exists: !!SUPABASE_ANON_KEY,
+      url_value: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'undefined',
+    })
   }
 
   // 환경 변수 검증
@@ -122,8 +122,9 @@ export type Database = {
           excerpt: string | null
           author_id: string | null
           author_name: string
+          category: string
           is_anonymous: boolean
-          is_private: boolean
+          visibility: string
           likes_count: number
           comments_count: number
           created_at: string
@@ -136,8 +137,9 @@ export type Database = {
           excerpt?: string | null
           author_id?: string | null
           author_name: string
+          category: string
           is_anonymous?: boolean
-          is_private?: boolean
+          visibility?: string
           likes_count?: number
           comments_count?: number
           created_at?: string
@@ -150,8 +152,9 @@ export type Database = {
           excerpt?: string | null
           author_id?: string | null
           author_name?: string
+          category?: string
           is_anonymous?: boolean
-          is_private?: boolean
+          visibility?: string
           likes_count?: number
           comments_count?: number
           created_at?: string
