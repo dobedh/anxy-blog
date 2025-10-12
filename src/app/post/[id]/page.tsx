@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Post } from '@/types/post';
+import { Post, PostVisibility } from '@/types/post';
 import { getPostById, deletePost, togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
 import { Comment } from '@/types/comment';
 import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
@@ -34,6 +34,16 @@ export default function PostPage({ params }: PostPageProps) {
   const router = useRouter();
 
   const postId = use(params).id;
+
+  // Visibility label helper
+  const getVisibilityLabel = (visibility: PostVisibility): string => {
+    const labels: Record<PostVisibility, string> = {
+      public: '전체 공개',
+      followers: '팔로워 공개',
+      private: '비공개'
+    };
+    return labels[visibility] || '전체 공개';
+  };
 
   useEffect(() => {
     const loadPost = async () => {
@@ -291,7 +301,11 @@ export default function PostPage({ params }: PostPageProps) {
 
         {/* Right section: Date + Menu button */}
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500">{post.date}</span>
+          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+            <span>{post.date}</span>
+            <span>·</span>
+            <span>{getVisibilityLabel(post.visibility)}</span>
+          </div>
           <DropdownMenu
             trigger={
               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

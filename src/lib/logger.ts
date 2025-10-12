@@ -170,9 +170,20 @@ class Logger {
       sanitizedMetadata.userId = maskUUID(userId);
     }
 
+    // Check if sanitized error is empty and provide fallback
+    const hasErrorContent = sanitizedError && (
+      sanitizedError.message ||
+      sanitizedError.name ||
+      sanitizedError.status
+    );
+
+    const errorToDisplay = hasErrorContent
+      ? sanitizedError
+      : { message: typeof error === 'string' ? error : 'Unknown error' };
+
     if (isDevelopment) {
       // Development: Show more details
-      console.error(`❌ [${context}]`, sanitizedError, sanitizedMetadata);
+      console.error(`❌ [${context}]`, errorToDisplay, sanitizedMetadata);
 
       // Also show original error in a collapsed group for debugging
       if (error) {
@@ -182,7 +193,8 @@ class Logger {
       }
     } else {
       // Production: Filtered output only
-      console.error(`❌ [${context}]`, sanitizedError?.message || 'An error occurred');
+      const errorMessage = errorToDisplay?.message || 'An error occurred';
+      console.error(`❌ [${context}]`, errorMessage);
 
       // TODO: Send to Sentry or other logging service
       // if (window.Sentry) {

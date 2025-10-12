@@ -136,7 +136,6 @@ export function useSupabaseAuth() {
   // 이메일/비밀번호 회원가입
   const signUp = async (email: string, password: string, metadata: {
     username: string
-    display_name: string
     bio?: string
   }) => {
     try {
@@ -144,7 +143,10 @@ export function useSupabaseAuth() {
         email,
         password,
         options: {
-          data: metadata
+          data: {
+            username: metadata.username,
+            bio: metadata.bio
+          }
         }
       })
 
@@ -157,7 +159,6 @@ export function useSupabaseAuth() {
           .insert({
             id: data.user.id,
             username: metadata.username,
-            display_name: metadata.display_name,
             bio: metadata.bio || ''
           })
 
@@ -171,9 +172,13 @@ export function useSupabaseAuth() {
         error,
         metadata: { action: 'user_registration' }
       });
+
+      // Provide more specific error message if available
+      const errorMessage = error?.message || '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+
       return {
         data: null,
-        error: { message: '회원가입 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.' }
+        error: { message: errorMessage }
       }
     }
   }

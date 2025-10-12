@@ -86,7 +86,6 @@ export async function createUser(data: CreateUserData): Promise<{ success: boole
       .insert({
         id: currentUser.id,
         username: data.username,
-        display_name: data.username, // username을 display_name으로도 사용
         bio: data.bio || '',
         is_private: data.isPrivate ?? false,
         allow_follow: data.allowFollow ?? true,
@@ -135,10 +134,7 @@ export async function updateUser(userId: string, updates: UpdateUserData): Promi
 
     // 업데이트 데이터 준비
     const updateData: any = {};
-    if (updates.username) {
-      updateData.username = updates.username;
-      updateData.display_name = updates.username; // username과 display_name을 동일하게 유지
-    }
+    if (updates.username) updateData.username = updates.username;
     if (updates.bio !== undefined) updateData.bio = updates.bio;
     if (updates.avatar) updateData.avatar_url = updates.avatar;
     if (updates.isPrivate !== undefined) updateData.is_private = updates.isPrivate;
@@ -242,20 +238,20 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     // 병렬로 통계 쿼리 실행
     const [postsResult, followersResult, followingResult] = await Promise.all([
       // 글 수
-      supabase
+      supabase()
         .from('posts')
         .select('id', { count: 'exact' })
         .eq('author_id', userId)
         .eq('is_private', false),
 
       // 팔로워 수
-      supabase
+      supabase()
         .from('follows')
         .select('id', { count: 'exact' })
         .eq('following_id', userId),
 
       // 팔로잉 수
-      supabase
+      supabase()
         .from('follows')
         .select('id', { count: 'exact' })
         .eq('follower_id', userId)
@@ -283,14 +279,14 @@ export async function getUsers(
   searchTerm?: string
 ): Promise<{ users: User[]; total: number }> {
   try {
-    let query = supabase
+    let query = supabase()
       .from('profiles')
       .select('*', { count: 'exact' })
       .eq('is_private', false)
       .order('created_at', { ascending: false });
 
     if (searchTerm) {
-      query = query.or(`username.ilike.%${searchTerm}%,display_name.ilike.%${searchTerm}%`);
+      query = query.or(`username.ilike.%${searchTerm}%,bio.ilike.%${searchTerm}%`);
     }
 
     const { data: profiles, error, count } = await query

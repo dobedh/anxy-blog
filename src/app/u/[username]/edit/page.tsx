@@ -11,7 +11,7 @@ interface EditProfilePageProps {
 }
 
 export default function EditProfilePage({ params }: EditProfilePageProps) {
-  const { currentUser, isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated, isLoading: authLoading } = useAuth();
   const [user, setUser] = useState<User | null>(null);
   const [bio, setBio] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -20,10 +20,36 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
 
   const username = use(params).username;
 
+  // 인증 상태 확인 - 타이머 기반 보호
+  useEffect(() => {
+    console.log('🔍 Profile edit page auth check:', {
+      authLoading,
+      isAuthenticated,
+      currentUser: currentUser ? 'exists' : 'null',
+      willCheckRedirect: !authLoading && !isAuthenticated
+    });
+
+    if (!authLoading && !isAuthenticated) {
+      // React 상태 동기화를 위한 짧은 지연
+      const redirectTimer = setTimeout(() => {
+        // 상태 안정화 후 재확인
+        if (!isAuthenticated) {
+          console.log('🔒 Profile edit page requires authentication - redirecting to home');
+          router.push('/');
+        } else {
+          console.log('✅ Authentication confirmed - staying on profile edit page');
+        }
+      }, 100);
+
+      return () => clearTimeout(redirectTimer);
+    }
+  }, [isAuthenticated, authLoading, router]);
+
+  // 사용자 데이터 로딩
   useEffect(() => {
     const loadUserData = async () => {
-      if (!isAuthenticated) {
-        router.push('/');
+      // 인증되지 않았거나 사용자 정보가 없으면 로딩하지 않음
+      if (!isAuthenticated || !currentUser) {
         return;
       }
 
@@ -35,7 +61,7 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
       }
 
       // 본인 프로필만 편집 가능
-      if (!currentUser || currentUser.id !== userData.id) {
+      if (currentUser.id !== userData.id) {
         router.push(`/u/${username}`);
         return;
       }
@@ -45,7 +71,9 @@ export default function EditProfilePage({ params }: EditProfilePageProps) {
       setIsLoading(false);
     };
 
-    loadUserData();
+    if (isAuthenticated && currentUser) {
+      loadUserData();
+    }
   }, [username, currentUser, isAuthenticated, router]);
 
   const handleSave = async () => {

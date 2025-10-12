@@ -101,7 +101,7 @@ function WritePageContent() {
     setShowVisibilityModal(true);
   };
 
-  const handleVisibilitySelect = async (visibility: PostVisibility) => {
+  const handleVisibilityConfirm = async (visibility: PostVisibility) => {
     setShowVisibilityModal(false);
     setIsSubmitting(true);
 
@@ -196,7 +196,7 @@ function WritePageContent() {
       <VisibilityModal
         isOpen={showVisibilityModal}
         onClose={() => setShowVisibilityModal(false)}
-        onSelect={handleVisibilitySelect}
+        onConfirm={handleVisibilityConfirm}
         currentVisibility={formData.visibility}
       />
     </div>
@@ -204,12 +204,30 @@ function WritePageContent() {
 }
 
 export default function WritePage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, currentUser } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    console.log('🔍 Write page auth check:', {
+      isLoading,
+      isAuthenticated,
+      currentUser: currentUser ? 'exists' : 'null',
+      willCheckRedirect: !isLoading && !isAuthenticated
+    });
+
     if (!isLoading && !isAuthenticated) {
-      router.push('/');
+      // React 상태 동기화를 위한 짧은 지연
+      const redirectTimer = setTimeout(() => {
+        // 상태 안정화 후 재확인
+        if (!isAuthenticated) {
+          console.log('🔒 Write page requires authentication - redirecting to home');
+          router.push('/');
+        } else {
+          console.log('✅ Authentication confirmed - staying on write page');
+        }
+      }, 100);
+
+      return () => clearTimeout(redirectTimer);
     }
   }, [isAuthenticated, isLoading, router]);
 

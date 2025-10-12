@@ -45,6 +45,18 @@ function EditPageContent({ postId }: { postId: string }) {
       setPostLoading(true);
 
       try {
+        // Verify Supabase session is ready (important for RLS to work)
+        const { supabase } = await import('@/lib/supabase');
+        const client = supabase();
+        const { data: { session } } = await client.auth.getSession();
+
+        if (!session) {
+          console.log('❌ No Supabase session found, redirecting to home');
+          router.push('/');
+          return;
+        }
+
+        console.log('✅ Session verified, loading post...');
         const postData = await getPostById(postId);
 
         if (!postData) {
@@ -105,7 +117,7 @@ function EditPageContent({ postId }: { postId: string }) {
     setShowVisibilityModal(true);
   };
 
-  const handleVisibilitySelect = async (visibility: PostVisibility) => {
+  const handleVisibilityConfirm = async (visibility: PostVisibility) => {
     setShowVisibilityModal(false);
     setIsSubmitting(true);
 
@@ -183,7 +195,7 @@ function EditPageContent({ postId }: { postId: string }) {
       <VisibilityModal
         isOpen={showVisibilityModal}
         onClose={() => setShowVisibilityModal(false)}
-        onSelect={handleVisibilitySelect}
+        onConfirm={handleVisibilityConfirm}
         currentVisibility={formData.visibility}
       />
     </div>

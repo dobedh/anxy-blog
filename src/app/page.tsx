@@ -6,6 +6,7 @@ import BrunchPostCard from '@/components/BrunchPostCard';
 import { getPosts } from '@/utils/supabasePostUtils';
 import { Post } from '@/types/post';
 import { useAuth } from '@/hooks/useAuth';
+import { clearSupabaseCache } from '@/lib/supabase';
 
 
 export default function Home() {
@@ -39,8 +40,20 @@ export default function Home() {
   };
 
   useEffect(() => {
-    // 클라이언트 사이드에서만 실행
+    // Detect OAuth redirect and clear Supabase cache
     if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      if (urlParams.has('_oauth_refresh')) {
+        console.log('🔄 OAuth redirect detected - refreshing Supabase client');
+        clearSupabaseCache();
+
+        // Clean up URL
+        urlParams.delete('_oauth_refresh');
+        const cleanUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+
       loadPosts();
     }
   }, [pathname, searchTerm]); // pathname이나 searchTerm이 변경될 때마다 새로 로드

@@ -17,10 +17,28 @@ export default function LikesPage() {
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
 
-  // 로그인 상태 확인
+  // 로그인 상태 확인 - 타이밍 이슈 방지 로직
   useEffect(() => {
+    console.log('🔍 Likes page auth check:', {
+      isLoading,
+      isAuthenticated,
+      currentUser: currentUser ? 'exists' : 'null',
+      willCheckRedirect: !isLoading && !isAuthenticated
+    });
+
     if (!isLoading && !isAuthenticated) {
-      router.push('/');
+      // React 상태 동기화를 위한 짧은 지연
+      const redirectTimer = setTimeout(() => {
+        // 상태 안정화 후 재확인
+        if (!isAuthenticated) {
+          console.log('🔒 Likes page requires authentication - redirecting to home');
+          router.push('/');
+        } else {
+          console.log('✅ Authentication confirmed - staying on likes page');
+        }
+      }, 100);
+
+      return () => clearTimeout(redirectTimer);
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -29,11 +47,18 @@ export default function LikesPage() {
     const loadLikedPosts = async () => {
       if (!currentUser) return;
 
+      console.log('👤 Loading liked posts for user:', {
+        id: currentUser.id,
+        username: currentUser.username,
+        email: currentUser.email
+      });
+
       setIsLoadingPosts(true);
       setError(null);
 
       try {
         const result = await getUserLikedPosts(currentUser.id, 0, 20);
+        console.log('📥 Liked posts result:', result);
 
         if (result.error) {
           setError(result.error);
@@ -78,8 +103,8 @@ export default function LikesPage() {
     }
   };
 
-  // 로딩 중일 때
-  if (isLoading) {
+  // 로딩 중이거나 사용자 정보가 없을 때
+  if (isLoading || !currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -90,11 +115,6 @@ export default function LikesPage() {
     );
   }
 
-  // 인증되지 않은 경우
-  if (!isAuthenticated || !currentUser) {
-    return null;
-  }
-
   return (
     <main className="pt-16 lg:pt-24 min-h-screen bg-background">
       <div className="content-container py-8 lg:py-12">
@@ -103,9 +123,6 @@ export default function LikesPage() {
           <h1 className="text-hero font-bold text-foreground mb-4">
             좋아요 한 글
           </h1>
-          <p className="text-body text-muted">
-            {total > 0 ? `${total}개의 글에 좋아요를 눌렀습니다` : '아직 좋아요한 글이 없습니다'}
-          </p>
         </div>
 
         {/* 에러 메시지 */}

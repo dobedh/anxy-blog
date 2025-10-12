@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSupabaseAuth } from './useSupabaseAuth';
-import { getSupabaseClient } from '@/lib/supabase';
+import { getSupabaseClient, clearSupabaseCache } from '@/lib/supabase';
 import { checkUsernameAvailability as supabaseCheckUsername } from '@/utils/supabaseUserUtils';
 import { LoginCredentials, SignupData, AuthUser, OAuthSignupData } from '@/types/user';
 import { checkRateLimit, resetRateLimit, RATE_LIMITS } from '@/utils/rateLimiter';
@@ -27,6 +28,7 @@ interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
+  const router = useRouter();
   const { user, loading, signIn, signInWithEmailOrUsername, signUp, signOut, signInWithGoogle /* signInWithKakao, */ } = useSupabaseAuth();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [userLoading, setUserLoading] = useState(false);
@@ -49,6 +51,9 @@ export function useAuth(): UseAuthReturn {
       }
 
       if (user) {
+        // Clear Supabase cache to ensure fresh client with new session
+        clearSupabaseCache();
+
         setUserLoading(true);
         try {
           console.log('🔄 Converting user profile...');
@@ -188,11 +193,51 @@ export function useAuth(): UseAuthReturn {
 
   const logout = useCallback(async () => {
     try {
+      console.log('🚪 Logging out...');
+
+      // 1. Clear localStorage first (synchronous, fast)
+      if (typeof window !== 'undefined') {
+        // Clear all draft posts
+        const draftKeys = Object.keys(localStorage).filter(key =>
+          key.startsWith('anxy_draft_post_')
+        );
+        draftKeys.forEach(key => localStorage.removeItem(key));
+
+        // Clear all rate limit data
+        const rateLimitKeys = Object.keys(localStorage).filter(key =>
+          key.startsWith('rateLimit:')
+        );
+        rateLimitKeys.forEach(key => localStorage.removeItem(key));
+
+        // Clear legacy post data (if exists)
+        localStorage.removeItem('anxy_posts');
+        localStorage.removeItem('userPosts');
+
+        console.log('✅ localStorage cleared');
+      }
+
+      // 2. Clear Supabase session (async)
       await signOut();
+      console.log('✅ Supabase session cleared');
+
+      // 3. Explicit state reset (backup for auth listener)
+      setCurrentUser(null);
+      console.log('✅ User state reset');
+
+      // 4. Clear Supabase cache
+      clearSupabaseCache();
+
+      // 5. Redirect to home
+      console.log('🏠 Redirecting to home...');
+      router.push('/');
+
     } catch (error) {
       console.error('Logout error:', error);
+      // Even on error, clear local data and redirect for safety
+      setCurrentUser(null);
+      router.push('/');
     }
-  }, [signOut]);
+  }, [signOut, router]);
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
@@ -309,7 +354,7 @@ export function useAuth(): UseAuthReturn {
     // 상태 - 동기화된 상태 제공
     currentUser,
     isAuthenticated: isReady && !!user && !!currentUser, // 모든 상태가 준비되고 동기화된 경우에만 true
-    isLoading: loading || userLoading || (isReady && !!user && !currentUser), // user는 있으나 currentUser가 아직 로드 안 된 경우도 로딩 중으로 처리
+    isLoading: loading || userLoading || !isReady || (!!user && !currentUser), // 준비 안됨 OR user는 있으나 currentUser가 아직 로드 안 된 경우 로딩 중
 
     // 액션
     login,

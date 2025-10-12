@@ -16,10 +16,28 @@ export default function EditProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
 
-  // 로그인 상태 확인
+  // 로그인 상태 확인 - 타이머 기반 보호
   useEffect(() => {
+    console.log('🔍 Profile edit page (standalone) auth check:', {
+      isLoading,
+      isAuthenticated,
+      currentUser: currentUser ? 'exists' : 'null',
+      willCheckRedirect: !isLoading && !isAuthenticated
+    });
+
     if (!isLoading && !isAuthenticated) {
-      router.push('/');
+      // React 상태 동기화를 위한 짧은 지연
+      const redirectTimer = setTimeout(() => {
+        // 상태 안정화 후 재확인
+        if (!isAuthenticated) {
+          console.log('🔒 Profile edit page requires authentication - redirecting to home');
+          router.push('/');
+        } else {
+          console.log('✅ Authentication confirmed - staying on profile edit page');
+        }
+      }, 100);
+
+      return () => clearTimeout(redirectTimer);
     }
   }, [isAuthenticated, isLoading, router]);
 

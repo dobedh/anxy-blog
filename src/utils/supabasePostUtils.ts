@@ -234,7 +234,19 @@ export async function getPosts(
   limit: number = 20
 ): Promise<Post[]> {
   try {
-    let query = supabase()
+    // Debug: 현재 세션 확인 (RLS 정책이 auth.uid()를 제대로 인식하는지 확인)
+    const client = supabase();
+    const { data: { session } } = await client.auth.getSession();
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 getPosts - Current session:', {
+        userId: session?.user?.id || 'NOT AUTHENTICATED',
+        hasSession: !!session,
+        filters: filters
+      });
+    }
+
+    let query = client
       .from('posts')
       .select('*');
 
@@ -246,19 +258,15 @@ export async function getPosts(
 
       if (filters.visibility !== undefined) {
         query = query.eq('visibility', filters.visibility);
-      } else {
-        // 기본적으로 공개 글만 조회
-        query = query.eq('visibility', 'public');
       }
+      // RLS 정책이 visibility 필터링을 자동으로 처리합니다
 
       if (filters.searchTerm) {
         const searchTerm = filters.searchTerm.toLowerCase();
         query = query.or(`title.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%,excerpt.ilike.%${searchTerm}%`);
       }
-    } else {
-      // 기본적으로 공개 글만 조회
-      query = query.eq('visibility', 'public');
     }
+    // RLS 정책이 visibility 필터링을 자동으로 처리합니다
 
     // 정렬
     switch (sortBy) {
@@ -326,8 +334,8 @@ export async function getPostCountByAuthor(authorId: string): Promise<number> {
     const { count, error } = await supabase()
       .from('posts')
       .select('id', { count: 'exact' })
-      .eq('author_id', authorId)
-      .eq('visibility', 'public');
+      .eq('author_id', authorId);
+      // RLS 정책이 visibility 필터링을 자동으로 처리합니다
 
     if (error) {
       console.error('Error getting post count:', error);
@@ -344,13 +352,13 @@ export async function getPostCountByAuthor(authorId: string): Promise<number> {
 // 특정 사용자의 글 목록 조회
 export async function getPostsByAuthor(
   authorId: string,
-  sortBy: PostSortOption = 'newest',
-  includePrivate: boolean = false
+  sortBy: PostSortOption = 'newest'
 ): Promise<Post[]> {
   const filters: PostFilters = {
-    authorId,
-    visibility: includePrivate ? undefined : 'public'
+    authorId
   };
+  // RLS 정책이 visibility 필터링을 자동으로 처리합니다
+  // 작성자 본인이면 모든 글을 볼 수 있고, 팔로워면 public+followers 글을, 그 외엔 public만 볼 수 있습니다
 
   return getPosts(filters, sortBy);
 }
@@ -437,6 +445,8 @@ export async function getUserLikedPosts(
   limit: number = 20
 ): Promise<{ posts: Post[]; total: number; error?: string }> {
   try {
+    console.log('🔍 getUserLikedPosts called with userId:', userId, 'offset:', offset, 'limit:', limit);
+
     // 사용자가 좋아요한 글 ID 목록을 먼저 조회
     const { data: likedPostIds, error: likesError, count } = await supabase()
       .from('post_likes')
@@ -444,6 +454,12 @@ export async function getUserLikedPosts(
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
+
+    console.log('📊 Liked post IDs query result:', {
+      likedPostIds,
+      count,
+      likesError
+    });
 
     if (likesError) {
       console.error('Error fetching liked post IDs:', likesError);
@@ -461,7 +477,7 @@ export async function getUserLikedPosts(
       .from('posts')
       .select('*')
       .in('id', postIds)
-      .eq('visibility', 'public') // 공개 글만 조회
+      // RLS 정책이 visibility 필터링을 자동으로 처리합니다
       .order('created_at', { ascending: false });
 
     if (postsError) {

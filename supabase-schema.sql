@@ -5,7 +5,6 @@
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   username TEXT UNIQUE NOT NULL,
-  display_name TEXT NOT NULL,
   bio TEXT DEFAULT '',
   avatar_url TEXT,
   is_private BOOLEAN DEFAULT false,

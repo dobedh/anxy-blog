@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/supabaseServer'
+import { createSupabaseServerClientWithResponse } from '@/lib/supabaseServer'
 import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') || '/'
+  let cookiesToSet: Array<{ name: string; value: string; options: any }> = []
 
   logger.debug({
     context: 'oauthCallback',
@@ -18,14 +19,37 @@ export async function GET(request: Request) {
   })
 
   if (code) {
-    // 서버 사이드 Supabase 클라이언트 사용 (쿠키 핸들링 지원)
-    const supabase = createSupabaseServerClient()
+    // Log all URL parameters and cookies for debugging
+    console.log('🔍 OAuth Callback Debug:', {
+      hasCode: !!code,
+      codeLength: code?.length,
+      allParams: Object.fromEntries(requestUrl.searchParams.entries()),
+      cookies: request.headers.get('cookie')?.split(';').map(c => c.trim().split('=')[0]),
+      origin: requestUrl.origin,
+      fullUrl: requestUrl.href
+    })
+
+    // 서버 사이드 Supabase 클라이언트 생성 (response 쿠키 핸들링)
+    const { client: supabase, cookiesToSet: cookies } = await createSupabaseServerClientWithResponse()
+    cookiesToSet = cookies
 
     try {
       // OAuth 코드를 세션으로 교환
       const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
       if (error) {
+        // Log raw error details for debugging (before logger sanitization)
+        console.error('🔴 OAuth Code Exchange Failed - RAW ERROR:', {
+          error: error,
+          errorCode: (error as any).code,
+          errorStatus: (error as any).status,
+          errorMessage: error.message,
+          errorName: error.name,
+          errorDetails: (error as any).details,
+          errorHint: (error as any).hint,
+          __raw: error  // Full error object
+        })
+
         logger.error({
           context: 'oauthCallback',
           error,
@@ -82,7 +106,6 @@ export async function GET(request: Request) {
           const { error: insertError } = await supabase.from('profiles').insert({
             id: data.session.user.id,
             username: username,
-            display_name: userMetadata.full_name || userMetadata.name || username,
             bio: '',
             avatar_url: userMetadata.avatar_url || userMetadata.picture,
             is_private: false,
@@ -126,11 +149,36 @@ export async function GET(request: Request) {
     }
   }
 
-  // 홈으로 리다이렉트 (쿠키에 세션 자동 저장됨)
-  logger.debug({
-    context: 'oauthCallback',
-    metadata: { step: 'redirecting_home' }
-  })
+  // 홈으로 리다이렉트 with cache-clearing signal
+  const redirectUrl = new URL(next, requestUrl.origin)
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin))
+  // Add cache-busting query parameter to trigger cache clear
+  if (code) {
+    redirectUrl.searchParams.set('_oauth_refresh', Date.now().toString())
+  }
+
+  const response = NextResponse.redirect(redirectUrl)
+
+  // OAuth 세션 쿠키를 Response에 설정
+  if (code && cookiesToSet) {
+    cookiesToSet.forEach(({ name, value, options }) => {
+      response.cookies.set(name, value, options)
+    })
+
+    logger.debug({
+      context: 'oauthCallback',
+      metadata: {
+        step: 'redirecting_with_cookies_and_cache_bust',
+        cookiesCount: cookiesToSet.length,
+        cookieNames: cookiesToSet.map(c => c.name)
+      }
+    })
+  } else {
+    logger.debug({
+      context: 'oauthCallback',
+      metadata: { step: 'redirecting_home_no_cookies' }
+    })
+  }
+
+  return response
 }

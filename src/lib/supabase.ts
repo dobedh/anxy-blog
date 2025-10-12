@@ -1,27 +1,19 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
+import { SupabaseClient } from '@supabase/supabase-js'
 
-// Supabase instance cache
-let supabaseInstance: SupabaseClient | null = null
-
-// Supabase 클라이언트 생성 함수
+// Supabase 클라이언트 생성 함수 (브라우저용 - PKCE 코드 검증기를 쿠키에 저장)
+// NOTE: 싱글톤 캐싱 제거됨 - @supabase/ssr이 내부적으로 세션을 쿠키를 통해 관리하므로
+// 매번 새로운 클라이언트를 생성해도 현재 인증 세션이 올바르게 적용됩니다.
+// 이를 통해 RLS 정책이 auth.uid()를 정확하게 인식할 수 있습니다.
 export const getSupabaseClient = (): SupabaseClient => {
-  // 클라이언트가 이미 있으면 반환
-  if (supabaseInstance) {
-    return supabaseInstance
+  // 서버 사이드 렌더링 중에는 클라이언트 생성 안 함
+  if (typeof window === 'undefined') {
+    throw new Error('getSupabaseClient should only be called on the client side')
   }
 
   // 환경변수 가져오기 - 함수 내부에서 동적으로 읽기 (HMR 대응)
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
   const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  // 개발 환경에서 환경 변수 디버깅
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.log('🔍 Supabase Environment Check:', {
-      url_exists: !!SUPABASE_URL,
-      key_exists: !!SUPABASE_ANON_KEY,
-      url_value: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'undefined',
-    })
-  }
 
   // 환경 변수 검증
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -42,38 +34,43 @@ export const getSupabaseClient = (): SupabaseClient => {
     throw new Error('Missing Supabase environment variables. Check console for details.')
   }
 
-  // Supabase 클라이언트 생성
+  // Supabase 클라이언트 생성 - @supabase/ssr 사용으로 PKCE 코드 검증기가 쿠키에 저장됨
+  // 매번 새로운 클라이언트 생성하지만 세션은 쿠키를 통해 자동으로 유지됩니다
   try {
-    supabaseInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce'
-      }
-    })
+    const client = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Supabase client initialized successfully')
+      console.log('✅ Supabase browser client created with current session')
     }
 
-    return supabaseInstance
+    return client
   } catch (error) {
     console.error('❌ Failed to initialize Supabase client:', error)
     throw error
   }
 }
 
-// OAuth 콜백용 클라이언트 - 동일한 싱글톤 인스턴스 반환
+/**
+ * @deprecated Singleton caching removed - no longer needed
+ * This function is kept for backwards compatibility but does nothing
+ */
+export const clearSupabaseCache = (): void => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('ℹ️ clearSupabaseCache called but singleton caching is disabled')
+  }
+}
+
+// OAuth 콜백용 클라이언트 - getSupabaseClient와 동일하게 동작
 export const createCallbackClient = (): SupabaseClient => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('🔄 Creating callback client (same singleton instance)')
+    console.log('🔄 Creating callback client with current session')
   }
   return getSupabaseClient()
 }
 
 // 함수 참조 내보내기 - 모든 utils에서 supabase()로 호출
-export const supabase = getSupabaseClient
+// Arrow function으로 변경하여 Turbopack HMR 캐싱 이슈 방지
+export const supabase = () => getSupabaseClient()
 
 // 타입 정의
 export type Database = {
@@ -83,7 +80,6 @@ export type Database = {
         Row: {
           id: string
           username: string
-          display_name: string
           bio: string
           avatar_url: string | null
           is_private: boolean
@@ -94,7 +90,6 @@ export type Database = {
         Insert: {
           id: string
           username: string
-          display_name: string
           bio?: string
           avatar_url?: string | null
           is_private?: boolean
@@ -105,7 +100,6 @@ export type Database = {
         Update: {
           id?: string
           username?: string
-          display_name?: string
           bio?: string
           avatar_url?: string | null
           is_private?: boolean

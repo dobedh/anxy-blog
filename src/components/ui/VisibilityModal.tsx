@@ -1,23 +1,26 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PostVisibility } from '@/types/post';
 
 interface VisibilityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (visibility: PostVisibility) => void;
+  onConfirm: (visibility: PostVisibility) => void;
   currentVisibility?: PostVisibility;
 }
 
 const VisibilityModal: React.FC<VisibilityModalProps> = ({
   isOpen,
   onClose,
-  onSelect,
+  onConfirm,
   currentVisibility = 'public',
 }) => {
+  const [selectedVisibility, setSelectedVisibility] = useState<PostVisibility>(currentVisibility);
+
   useEffect(() => {
     if (isOpen) {
+      setSelectedVisibility(currentVisibility || 'public'); // Reset to current when modal opens
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -26,7 +29,7 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, currentVisibility]);
 
   if (!isOpen) return null;
 
@@ -53,7 +56,8 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
       onClick={onClose}
     >
       <div
@@ -75,24 +79,21 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
           {visibilityOptions.map((option) => (
             <button
               key={option.value}
-              onClick={() => onSelect(option.value)}
+              onClick={() => setSelectedVisibility(option.value)}
               className={`w-full p-4 rounded-lg border-2 transition-gentle text-left hover:border-gray-400 hover:shadow-md ${
-                currentVisibility === option.value
-                  ? 'border-gray-900 bg-gray-50'
-                  : 'border-gray-200'
+                selectedVisibility === option.value
+                  ? 'border-gray-900 bg-gray-50 opacity-100'
+                  : 'border-gray-200 opacity-40 hover:opacity-60'
               }`}
             >
-              <div className="flex items-start space-x-3">
+              <div className="flex items-center space-x-3">
                 <div className="text-2xl">{option.icon}</div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900 mb-1">
+                  <div className="font-medium text-gray-900">
                     {option.title}
                   </div>
-                  <div className="text-sm text-gray-500">
-                    {option.description}
-                  </div>
                 </div>
-                {currentVisibility === option.value && (
+                {selectedVisibility === option.value && (
                   <div className="text-gray-900">✓</div>
                 )}
               </div>
@@ -100,11 +101,20 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
           ))}
         </div>
 
-        {/* Cancel button */}
-        <div className="pt-4 border-t border-gray-200">
+        {/* Action buttons */}
+        <div className="pt-4 border-t border-gray-200 flex flex-col items-center gap-4">
+          {/* Save button - Primary action */}
+          <button
+            onClick={() => onConfirm(selectedVisibility)}
+            className="max-w-xs w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-gentle"
+          >
+            저장
+          </button>
+
+          {/* Cancel link - Secondary action */}
           <button
             onClick={onClose}
-            className="w-full py-3 text-gray-600 hover:text-gray-900 transition-gentle"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-gentle"
           >
             취소
           </button>

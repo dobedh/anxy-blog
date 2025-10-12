@@ -49,7 +49,6 @@ function convertLegacyUserToSupabase(userId: string, legacyUser: any) {
   return {
     id: userId,
     username: legacyUser.username || `user_${userId.slice(0, 8)}`,
-    display_name: legacyUser.displayName || legacyUser.username || '사용자',
     bio: legacyUser.bio || '',
     avatar_url: legacyUser.avatar === 'default' ? null : legacyUser.avatar,
     is_private: legacyUser.isPrivate || false,

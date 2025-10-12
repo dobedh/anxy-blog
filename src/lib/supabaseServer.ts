@@ -35,3 +35,32 @@ export function createSupabaseServerClient() {
     }
   )
 }
+
+/**
+ * Creates a Supabase client for OAuth callbacks with response cookie handling
+ * Compatible with Next.js 15 async cookies API
+ * Returns both the client and an array of cookies to be set in NextResponse
+ */
+export async function createSupabaseServerClientWithResponse() {
+  const cookieStore = await cookies()
+  const cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }> = []
+
+  const client = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(newCookies) {
+          newCookies.forEach(({ name, value, options }) => {
+            cookiesToSet.push({ name, value, options })
+          })
+        },
+      },
+    }
+  )
+
+  return { client, cookiesToSet }
+}
