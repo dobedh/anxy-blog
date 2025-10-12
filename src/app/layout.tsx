@@ -19,7 +19,7 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "Anxy Blog - 불안한 감정을 위한 커뮤니티",
+  title: "Anxy note",
   description: "불안한 감정을 느끼는 사람들을 위한 안전한 공간",
 };
 
