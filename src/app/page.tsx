@@ -59,7 +59,7 @@ export default function Home() {
   }, [pathname, searchTerm]); // pathname이나 searchTerm이 변경될 때마다 새로 로드
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8">
       {/* Search Result Header */}
       {searchTerm && (
         <div className="mb-6">

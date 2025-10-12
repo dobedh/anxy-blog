@@ -117,7 +117,7 @@ export default function LikesPage() {
 
   return (
     <main className="pt-16 lg:pt-24 min-h-screen bg-background">
-      <div className="content-container py-8 lg:py-12">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8 lg:py-12">
         {/* 헤더 */}
         <div className="mb-12 text-center">
           <h1 className="text-hero font-bold text-foreground mb-4">

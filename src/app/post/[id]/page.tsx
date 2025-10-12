@@ -277,7 +277,7 @@ export default function PostPage({ params }: PostPageProps) {
       ];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 pt-24">
+    <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8 pt-24">
       {/* 1. Title */}
       <div className="mb-6">
         <h1 className="text-2xl lg:text-4xl font-bold text-foreground leading-tight">

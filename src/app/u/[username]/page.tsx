@@ -103,7 +103,7 @@ export default function UserPage({ params }: UserPageProps) {
   }
 
   return (
-    <div className="content-container" style={{paddingTop: '80px'}}>
+    <div className="max-w-4xl mx-auto px-4 lg:px-6 pt-20">
       {/* User Profile Section */}
       <div className="text-center mb-16">
         <h1 className="text-hero font-bold text-foreground mb-4">

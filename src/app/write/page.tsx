@@ -171,7 +171,7 @@ function WritePageContent() {
       <WriteHeader onSave={handleSave} isSubmitting={isSubmitting} isSaved={isSaved} lastSaved={lastSaved} />
 
       {/* Writing area */}
-      <div className="max-w-3xl mx-auto px-6 pt-24 pb-20">
+      <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-24 pb-20">
         {/* Title input - borderless */}
         <input
           type="text"
@@ -233,7 +233,7 @@ export default function WritePage() {
 
   if (isLoading) {
     return (
-      <div className="content-container space-2xl pt-24">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-8 pt-24">
         <div className="text-center">
           <p className="text-body text-muted">로딩 중...</p>
         </div>
