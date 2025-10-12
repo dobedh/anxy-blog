@@ -90,7 +90,7 @@ export default function RecommendedAuthors() {
                 {/* Follow Button */}
                 <button
                   onClick={() => handleFollow(author.id)}
-                  className="ml-2 px-3 py-1 text-xs font-medium rounded-full transition-colors flex-shrink-0 border border-blue-600 text-blue-600 hover:bg-blue-50"
+                  className="ml-2 px-3 py-1 text-xs font-medium rounded-full transition-colors flex-shrink-0 border border-blue-600 text-blue-600 hover:bg-blue-50 cursor-pointer"
                 >
                   팔로우
                 </button>
@@ -102,7 +102,7 @@ export default function RecommendedAuthors() {
 
       {/* See More */}
       <div className="mt-6 pt-4 border-t border-gray-200">
-        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer">
           작가 더 보기
         </button>
       </div>

@@ -57,23 +57,6 @@
   --font-serif: var(--font-source-serif);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #1a202c;         /* Deep blue-gray, not pure black */
-    --surface: #2d3748;            /* Elevated dark surface */
-    --foreground: #f7fafc;         /* Brighter white for readability */
-    --primary: #e2e8f0;            /* Light for contrast */
-    --primary-hover: #cbd5e0;      /* Muted hover */
-    --accent: #4a5568;             /* Mid-tone accent */
-    --muted: #cbd5e0;              /* Brighter muted text */
-    --secondary: #a0aec0;          /* Secondary text */
-    --subtle: #2d3748;             /* Subtle background */
-    --border: #4a5568;             /* Visible but soft borders */
-    --success: #48bb78;
-    --warning: #ed8936;
-    --error: #f56565;
-  }
-}
 
 body {
   background: var(--background);
@@ -310,6 +293,7 @@ body {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
+
 
 .header-scrolled {
   border-bottom-color: var(--border);

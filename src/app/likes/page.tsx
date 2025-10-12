@@ -148,7 +148,7 @@ export default function LikesPage() {
             </p>
             <Link
               href="/"
-              className="inline-block bg-primary text-surface px-6 py-3 rounded-lg text-body font-medium hover:bg-primary-hover transition-gentle focus-ring"
+              className="inline-block bg-primary text-surface px-6 py-3 rounded-lg text-body font-medium hover:bg-primary-hover transition-gentle focus-ring cursor-pointer"
             >
               글 둘러보기
             </Link>
@@ -168,7 +168,7 @@ export default function LikesPage() {
                 <button
                   onClick={loadMorePosts}
                   disabled={isLoadingPosts}
-                  className="bg-accent text-primary px-8 py-3 rounded-lg text-body font-medium hover:bg-border transition-gentle focus-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-accent text-primary px-8 py-3 rounded-lg text-body font-medium hover:bg-border transition-gentle focus-ring cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoadingPosts ? (
                     <div className="flex items-center justify-center">

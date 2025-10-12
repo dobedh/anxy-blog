@@ -56,7 +56,7 @@ export default function DropdownMenu({ trigger, items, align = 'right' }: Dropdo
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 hover:bg-gray-50 rounded-full transition-colors"
+        className="p-1.5 hover:bg-gray-50 rounded-full transition-colors cursor-pointer"
         aria-label="더보기 옵션"
       >
         {trigger}
@@ -75,7 +75,7 @@ export default function DropdownMenu({ trigger, items, align = 'right' }: Dropdo
                 item.onClick();
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors cursor-pointer ${
                 item.className || 'text-gray-700'
               }`}
             >

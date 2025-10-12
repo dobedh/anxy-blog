@@ -68,8 +68,8 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
         {/* Content Section - Left */}
         <div className="flex-1">
           {/* Content */}
-          <Link href={postUrl} className="block">
-            <h2 className="text-lg text-gray-900 mb-2 group-hover:text-gray-700 transition-colors leading-tight line-clamp-2 font-medium">
+          <Link href={postUrl} className="block cursor-pointer">
+            <h2 className="text-lg text-foreground mb-2 group-hover:opacity-80 transition-colors leading-tight line-clamp-2 font-medium">
               {title}
             </h2>
             <p className="text-gray-500 text-sm leading-relaxed mb-3 line-clamp-3">
@@ -89,7 +89,7 @@ export default function BrunchPostCard({ post }: BrunchPostCardProps) {
             <button
               onClick={handleLike}
               disabled={isLoading}
-              className="p-2 hover:bg-gray-50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-gray-50 rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={isLiked ? "Unlike" : "Like"}
             >
               <svg

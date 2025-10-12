@@ -151,7 +151,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
           aria-label="모달 닫기"
         >
           <svg
@@ -196,7 +196,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               <button
                 onClick={handleGoogleLogin}
                 disabled={oauthLoading !== null}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ minHeight: '44px' }}
               >
                 {oauthLoading === 'google' ? (
@@ -262,7 +262,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               <button
                 onClick={() => setShowEmailForm(true)}
                 disabled={oauthLoading !== null}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ minHeight: '44px' }}
               >
                 <svg
@@ -291,7 +291,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     onClose();
                     onSwitchToSignup();
                   }}
-                  className="text-green-600 font-medium hover:underline"
+                  className="text-green-600 font-medium hover:underline cursor-pointer"
                 >
                   회원가입
                 </button>
@@ -332,7 +332,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gray-900 text-white px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gray-900 text-white px-4 py-3 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ minHeight: '44px' }}
               >
                 {isLoading ? (
@@ -349,7 +349,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
             {/* 돌아가기 버튼 */}
             <button
               onClick={() => setShowEmailForm(false)}
-              className="mt-4 w-full text-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="mt-4 w-full text-center text-sm text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
             >
               ← 다른 방법으로 로그인
             </button>
@@ -363,7 +363,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToSignup }: LoginM
                     onClose();
                     onSwitchToSignup();
                   }}
-                  className="text-green-600 font-medium hover:underline"
+                  className="text-green-600 font-medium hover:underline cursor-pointer"
                 >
                   회원가입
                 </button>

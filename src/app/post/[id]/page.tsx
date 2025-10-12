@@ -351,7 +351,7 @@ export default function PostPage({ params }: PostPageProps) {
         <button
           onClick={handleLike}
           disabled={isLikeLoading}
-          className={`flex items-center justify-center gap-2 px-4 py-2 bg-white border rounded-full text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+          className={`flex items-center justify-center gap-2 px-4 py-2 bg-white border rounded-full text-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
             isLiked
               ? 'border-red-300 text-red-600 hover:bg-red-50'
               : 'border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -372,7 +372,7 @@ export default function PostPage({ params }: PostPageProps) {
         {/* Comment button */}
         <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -409,7 +409,7 @@ export default function PostPage({ params }: PostPageProps) {
                       <button
                         type="submit"
                         disabled={isSubmittingComment}
-                        className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isSubmittingComment ? '댓글 작성 중...' : '댓글 작성'}
                       </button>
@@ -423,7 +423,7 @@ export default function PostPage({ params }: PostPageProps) {
               <p className="text-sm text-gray-600 mb-2">댓글을 작성하려면 로그인이 필요합니다.</p>
               <button
                 onClick={() => setIsLoginModalOpen(true)}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors cursor-pointer"
               >
                 로그인하기
               </button>

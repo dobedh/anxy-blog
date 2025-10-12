@@ -80,7 +80,7 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
             <button
               key={option.value}
               onClick={() => setSelectedVisibility(option.value)}
-              className={`w-full p-4 rounded-lg border-2 transition-gentle text-left hover:border-gray-400 hover:shadow-md ${
+              className={`w-full p-4 rounded-lg border-2 transition-gentle text-left hover:border-gray-400 hover:shadow-md cursor-pointer ${
                 selectedVisibility === option.value
                   ? 'border-gray-900 bg-gray-50 opacity-100'
                   : 'border-gray-200 opacity-40 hover:opacity-60'
@@ -106,7 +106,7 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
           {/* Save button - Primary action */}
           <button
             onClick={() => onConfirm(selectedVisibility)}
-            className="max-w-xs w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-gentle"
+            className="max-w-xs w-full py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-gentle cursor-pointer"
           >
             저장
           </button>
@@ -114,7 +114,7 @@ const VisibilityModal: React.FC<VisibilityModalProps> = ({
           {/* Cancel link - Secondary action */}
           <button
             onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-900 transition-gentle"
+            className="text-sm text-gray-500 hover:text-gray-900 transition-gentle cursor-pointer"
           >
             취소
           </button>

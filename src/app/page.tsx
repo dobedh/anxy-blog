@@ -101,7 +101,7 @@ export default function Home() {
                   <p className="text-gray-500 text-sm mb-6">"{searchTerm}"에 대한 글을 찾을 수 없습니다.</p>
                   <a
                     href="/"
-                    className="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors cursor-pointer"
                   >
                     전체 글 보기
                   </a>
@@ -118,7 +118,7 @@ export default function Home() {
                   {isAuthenticated && (
                     <a
                       href="/write"
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
                     >
                       글쓰기
                     </a>

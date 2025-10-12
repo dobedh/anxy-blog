@@ -97,7 +97,7 @@ export default function Header() {
           <div ref={dropdownRef} className="relative w-16 flex-shrink-0">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="h-16 px-3 lg:px-4 hover:bg-gray-100 transition-colors flex items-center justify-center"
+              className="h-16 px-3 lg:px-4 hover:bg-gray-100 transition-colors flex items-center justify-center cursor-pointer"
               aria-label="Menu"
             >
               <svg
@@ -151,7 +151,7 @@ export default function Header() {
                         {/* Profile Image */}
                         <Link
                           href={`/u/${currentUser?.username}`}
-                          className="flex items-center space-x-3 flex-1"
+                          className="flex items-center space-x-3 flex-1 cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <div className="w-12 h-12 bg-brunch-light-green rounded-full">
@@ -166,7 +166,7 @@ export default function Header() {
                         {/* Write Button */}
                         <Link
                           href="/write"
-                          className="ml-4 p-2 bg-white text-gray-600 border border-gray-400 rounded-full hover:bg-gray-50 hover:text-gray-700 hover:border-gray-500 transition-colors"
+                          className="ml-4 p-2 bg-white text-gray-600 border border-gray-400 rounded-full hover:bg-gray-50 hover:text-gray-700 hover:border-gray-500 transition-colors cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                           title="글쓰기"
                         >
@@ -192,7 +192,7 @@ export default function Header() {
                       <nav className="space-y-1">
                         <Link
                           href="/"
-                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +202,7 @@ export default function Header() {
                         </Link>
                         <Link
                           href={`/u/${currentUser?.username}`}
-                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,7 +212,7 @@ export default function Header() {
                         </Link>
                         <Link
                           href="/likes"
-                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,7 +229,7 @@ export default function Header() {
                     <div className="p-6 border-b border-gray-200">
                       <Link
                         href="/"
-                        className="text-xl font-medium text-gray-900"
+                        className="text-xl font-medium text-gray-900 cursor-pointer"
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Anxy
@@ -241,7 +241,7 @@ export default function Header() {
                       <nav className="space-y-1">
                         <Link
                           href="/"
-                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -253,7 +253,7 @@ export default function Header() {
                         {/* Authentication Section */}
                         <div className="border-t border-gray-200 my-4"></div>
                         <button
-                          className="w-full flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                          className="w-full flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left cursor-pointer"
                           onClick={() => {
                             setIsMenuOpen(false);
                             setIsLoginModalOpen(true);
@@ -266,7 +266,7 @@ export default function Header() {
                         </button>
                         <Link
                           href="/signup"
-                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center px-6 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() => setIsMenuOpen(false)}
                         >
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -287,7 +287,7 @@ export default function Header() {
                         logout();
                         setIsMenuOpen(false);
                       }}
-                      className="w-full px-5 py-2 bg-white text-gray-500 rounded-full hover:bg-gray-50 hover:text-gray-600 transition-colors text-sm font-medium"
+                      className="w-full px-5 py-2 bg-white text-gray-500 rounded-full hover:bg-gray-50 hover:text-gray-600 transition-colors text-sm font-medium cursor-pointer"
                     >
                       로그아웃
                     </button>
@@ -300,7 +300,7 @@ export default function Header() {
           {/* Logo - Right next to hamburger */}
           <Link
             href="/"
-            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors flex-shrink-0 px-3 whitespace-nowrap"
+            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors flex-shrink-0 px-3 whitespace-nowrap cursor-pointer"
           >
             Anxy
           </Link>
@@ -332,7 +332,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={handleSearchClear}
-                  className="absolute right-2 lg:right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 lg:right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 cursor-pointer"
                   aria-label="Clear search"
                 >
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -361,7 +361,7 @@ export default function Header() {
               {/* Write Button */}
               <Link
                 href="/write"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
                 title="글쓰기"
               >
                 <svg
@@ -381,7 +381,7 @@ export default function Header() {
               </Link>
 
               {/* Profile Image */}
-              <Link href={`/u/${currentUser?.username}`} className="flex-shrink-0">
+              <Link href={`/u/${currentUser?.username}`} className="flex-shrink-0 cursor-pointer">
                 <div className="w-8 h-8 bg-gray-100 border border-gray-200 rounded-full focus:outline-none hover:bg-gray-200 transition-colors cursor-pointer">
                 </div>
               </Link>
@@ -389,7 +389,7 @@ export default function Header() {
           ) : (
             <button
               onClick={() => setIsLoginModalOpen(true)}
-              className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
+              className="px-4 py-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0 cursor-pointer"
             >
               로그인
             </button>

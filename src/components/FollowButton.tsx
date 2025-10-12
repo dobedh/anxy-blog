@@ -45,7 +45,7 @@ export default function FollowButton({
     return (
       <button
         onClick={() => router.push('/profile/edit')}
-        className="px-6 py-2 rounded-full font-medium bg-surface text-foreground border border-border hover:bg-subtle transition-gentle focus-ring"
+        className="px-6 py-2 rounded-full font-medium bg-surface text-foreground border border-border hover:bg-subtle transition-gentle focus-ring cursor-pointer"
       >
         프로필 수정
       </button>
@@ -83,10 +83,10 @@ export default function FollowButton({
   // 스타일 분기
   const getButtonClasses = () => {
     if (variant === 'compact') {
-      return `px-4 py-1.5 text-sm font-medium rounded-full border border-gray-300 text-gray-700 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed`;
+      return `px-4 py-1.5 text-sm font-medium rounded-full border border-gray-300 text-gray-700 transition-colors hover:border-gray-400 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed`;
     }
 
-    return `px-6 py-2 rounded-full font-medium transition-gentle focus-ring disabled:opacity-50 disabled:cursor-not-allowed ${
+    return `px-6 py-2 rounded-full font-medium transition-gentle focus-ring cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
       isFollowingUser
         ? 'bg-surface text-foreground border border-border hover:bg-subtle'
         : 'bg-primary text-surface hover:bg-primary-hover'

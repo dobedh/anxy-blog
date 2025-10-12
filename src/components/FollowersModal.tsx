@@ -128,7 +128,7 @@ export default function FollowersModal({
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
             aria-label="모달 닫기"
           >
             <svg
@@ -189,7 +189,7 @@ export default function FollowersModal({
                   <button
                     onClick={() => loadUsers(false)}
                     disabled={loading}
-                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">

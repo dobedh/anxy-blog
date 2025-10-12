@@ -31,7 +31,7 @@ export default function WriteHeader({ onSave, isSubmitting, isSaved, lastSaved }
         <div className="absolute left-1/4 flex items-center gap-4">
           <Link
             href="/"
-            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors"
+            className="text-xl font-medium text-gray-900 hover:text-gray-700 transition-colors cursor-pointer"
           >
             Anxy
           </Link>
@@ -51,7 +51,7 @@ export default function WriteHeader({ onSave, isSubmitting, isSaved, lastSaved }
           <button
             onClick={onSave}
             disabled={isSubmitting}
-            className="px-4 py-1.5 text-gray-600 text-sm font-medium border border-gray-400 rounded-full hover:text-gray-700 hover:border-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 text-gray-600 text-sm font-medium border border-gray-400 rounded-full hover:text-gray-700 hover:border-gray-500 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? '저장 중...' : '저장'}
           </button>
