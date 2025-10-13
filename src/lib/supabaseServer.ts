@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 /**
@@ -32,6 +33,28 @@ export function createSupabaseServerClient() {
           }
         },
       },
+    }
+  )
+}
+
+/**
+ * Creates a Supabase admin client with service role key
+ * This bypasses RLS and should only be used for admin operations on the server
+ * NEVER expose this client or its credentials to the client-side
+ */
+export function createSupabaseAdminClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not defined')
+  }
+
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
   )
 }

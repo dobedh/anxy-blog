@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClientWithResponse } from '@/lib/supabaseServer'
+import { createSupabaseServerClientWithResponse, createSupabaseAdminClient } from '@/lib/supabaseServer'
 import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
@@ -78,7 +78,7 @@ export async function GET(request: Request) {
           .maybeSingle()
 
         if (!profile && !profileError) {
-          // 프로필이 없으면 생성
+          // 프로필이 없으면 생성 (admin 클라이언트 사용하여 RLS 우회)
           logger.debug({
             context: 'oauthCallback',
             metadata: { userId: data.session.user.id, step: 'creating_profile' }
@@ -92,8 +92,11 @@ export async function GET(request: Request) {
                         email.split('@')[0] ||
                         `user_${Date.now()}`
 
+          // Admin 클라이언트로 중복 체크 및 프로필 생성
+          const adminClient = createSupabaseAdminClient()
+
           // username 중복 체크
-          const { data: existingUser } = await supabase
+          const { data: existingUser } = await adminClient
             .from('profiles')
             .select('username')
             .eq('username', username)
@@ -103,7 +106,7 @@ export async function GET(request: Request) {
             username = `${username}_${Date.now()}`
           }
 
-          const { error: insertError } = await supabase.from('profiles').insert({
+          const { error: insertError } = await adminClient.from('profiles').insert({
             id: data.session.user.id,
             username: username,
             bio: '',
