@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Post, PostVisibility } from '@/types/post';
 import { getPostById, deletePost, togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
 import { Comment } from '@/types/comment';
-import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
+import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/supabaseCommentUtils';
 import { useAuth } from '@/hooks/useAuth';
 import DropdownMenu from '@/components/ui/DropdownMenu';
 import FollowButton from '@/components/FollowButton';
@@ -94,9 +94,9 @@ export default function PostPage({ params }: PostPageProps) {
 
   useEffect(() => {
     if (postId) {
-      const loadComments = () => {
-        const postComments = getCommentsByPostId(postId);
-        const count = getCommentCount(postId);
+      const loadComments = async () => {
+        const postComments = await getCommentsByPostId(postId);
+        const count = await getCommentCount(postId);
         setComments(postComments);
         setCommentCount(count);
       };
@@ -223,7 +223,7 @@ export default function PostPage({ params }: PostPageProps) {
     setIsSubmittingComment(true);
 
     try {
-      const result = createComment(
+      const result = await createComment(
         { content: commentInput, postId },
         currentUser.id,
         currentUser.username
@@ -232,8 +232,8 @@ export default function PostPage({ params }: PostPageProps) {
       if (result.success) {
         setCommentInput('');
         // Reload comments
-        const postComments = getCommentsByPostId(postId);
-        const count = getCommentCount(postId);
+        const postComments = await getCommentsByPostId(postId);
+        const count = await getCommentCount(postId);
         setComments(postComments);
         setCommentCount(count);
       } else {

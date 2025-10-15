@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { Follow } from '@/lib/supabase';
 import { getUserById } from './supabaseUserUtils';
 import { User } from '@/types/user';
+import { createNotification } from './supabaseNotificationUtils';
 
 // 팔로우 관계 생성
 export async function followUser(followerId: string, followingId: string): Promise<{ success: boolean; error?: string }> {
@@ -50,6 +51,43 @@ export async function followUser(followerId: string, followingId: string): Promi
     if (error) {
       console.error('Error creating follow:', error);
       return { success: false, error: '팔로우에 실패했습니다.' };
+    }
+
+    // 팔로우 성공 시 알림 생성 (비동기, 실패해도 팔로우는 성공 처리)
+    try {
+      const followerUser = await getUserById(followerId);
+      if (!followerUser) {
+        console.error('❌ NOTIFICATION FAILED: Could not fetch follower user data', {
+          followerId,
+          followingId
+        });
+        return { success: true }; // Follow succeeded even if notification failed
+      }
+
+      const notifResult = await createNotification({
+        userId: followingId,
+        actorId: followerId,
+        actorName: followerUser.username,
+        actorAvatarUrl: followerUser.avatar || null,
+        type: 'NEW_FOLLOWER',
+        title: `${followerUser.username}님이 팔로우했습니다`,
+        message: null,
+        postId: null,
+        commentId: null
+      });
+
+      if (!notifResult.success) {
+        console.error('❌ NOTIFICATION CREATION FAILED:', {
+          error: notifResult.error,
+          followerId,
+          followingId,
+          actorName: followerUser.username
+        });
+      } else {
+        console.log('✅ Follow notification created successfully');
+      }
+    } catch (notifError) {
+      console.error('❌ UNEXPECTED ERROR in notification creation:', notifError);
     }
 
     return { success: true };

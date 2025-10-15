@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Post, PostVisibility } from '@/types/post';
 import { getPostByUsernameAndNumber, deletePost, togglePostLike, checkUserLikedPost } from '@/utils/supabasePostUtils';
 import { Comment } from '@/types/comment';
-import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/commentUtils';
+import { getCommentsByPostId, getCommentCount, createComment, formatCommentDate } from '@/utils/supabaseCommentUtils';
 import { useAuth } from '@/hooks/useAuth';
 import DropdownMenu from '@/components/ui/DropdownMenu';
 import FollowButton from '@/components/FollowButton';
@@ -78,9 +78,9 @@ export default function PostPage({ params }: PostPageProps) {
 
   useEffect(() => {
     if (post?.id) {
-      const loadComments = () => {
-        const postComments = getCommentsByPostId(post.id.toString());
-        const count = getCommentCount(post.id.toString());
+      const loadComments = async () => {
+        const postComments = await getCommentsByPostId(post.id.toString());
+        const count = await getCommentCount(post.id.toString());
         setComments(postComments);
         setCommentCount(count);
       };
@@ -207,7 +207,7 @@ export default function PostPage({ params }: PostPageProps) {
     setIsSubmittingComment(true);
 
     try {
-      const result = createComment(
+      const result = await createComment(
         { content: commentInput, postId: post!.id.toString() },
         currentUser.id,
         currentUser.username
@@ -216,8 +216,8 @@ export default function PostPage({ params }: PostPageProps) {
       if (result.success) {
         setCommentInput('');
         // Reload comments
-        const postComments = getCommentsByPostId(post!.id.toString());
-        const count = getCommentCount(post!.id.toString());
+        const postComments = await getCommentsByPostId(post!.id.toString());
+        const count = await getCommentCount(post!.id.toString());
         setComments(postComments);
         setCommentCount(count);
       } else {

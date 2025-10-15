@@ -7,17 +7,26 @@ import { useScrollEffect } from '@/hooks/useScrollEffect';
 import { useRouter, useSearchParams } from 'next/navigation';
 import LoginModal from '@/components/ui/LoginModal';
 import SignupModal from '@/components/ui/SignupModal';
+import NotificationButton from '@/components/ui/NotificationButton';
+import NotificationDropdown from '@/components/ui/NotificationDropdown';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function Header() {
   const { currentUser, isAuthenticated, isLoading, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isScrolled = useScrollEffect(10);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Notification management
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(
+    currentUser?.id
+  );
 
   // 인증 상태 변경 시 메뉴 닫기 (혼동 방지)
   useEffect(() => {
@@ -344,11 +353,15 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Right Side - Write, Profile */}
+        {/* Right Side - Write, Notification, Profile */}
         <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0 min-w-0 mr-2 lg:mr-4">
           {isLoading ? (
             // Loading skeleton - 동일한 크기 유지
             <>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-full">
+                <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
+                <div className="hidden lg:block w-12 h-4 bg-gray-200 rounded animate-pulse"></div>
+              </div>
               <div className="flex items-center gap-2 px-3 py-2 rounded-full">
                 <div className="w-5 h-5 bg-gray-200 rounded animate-pulse"></div>
                 <div className="hidden lg:block w-12 h-4 bg-gray-200 rounded animate-pulse"></div>
@@ -379,6 +392,26 @@ export default function Header() {
                 </svg>
                 <span className="hidden lg:inline">글쓰기</span>
               </Link>
+
+              {/* Notification Button */}
+              <div className="relative">
+                <NotificationButton
+                  unreadCount={unreadCount}
+                  isOpen={isNotificationOpen}
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                />
+
+                {/* Notification Dropdown */}
+                {isNotificationOpen && (
+                  <NotificationDropdown
+                    notifications={notifications}
+                    onClose={() => setIsNotificationOpen(false)}
+                    onMarkAsRead={markAsRead}
+                    onMarkAllAsRead={markAllAsRead}
+                    userId={currentUser!.id}
+                  />
+                )}
+              </div>
 
               {/* Profile Image */}
               <Link href={`/u/${currentUser?.username}`} className="flex-shrink-0 cursor-pointer">

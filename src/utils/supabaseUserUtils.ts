@@ -185,6 +185,8 @@ export async function deleteUser(userId: string): Promise<{ success: boolean; er
 // ID로 사용자 조회
 export async function getUserById(userId: string): Promise<User | undefined> {
   try {
+    console.log('🔍 Fetching user by ID:', userId);
+
     const { data: profile, error } = await supabase()
       .from('profiles')
       .select('*')
@@ -192,17 +194,39 @@ export async function getUserById(userId: string): Promise<User | undefined> {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching user by ID:', error);
+      console.error('❌ Error fetching user by ID:', {
+        userId,
+        error: error.message,
+        code: error.code
+      });
       return undefined;
     }
 
     if (!profile) {
+      console.warn('⚠️ User profile not found for ID:', userId);
       return undefined;
     }
 
+    // Validate critical fields
+    if (!profile.username) {
+      console.error('❌ CRITICAL: User profile has no username:', {
+        userId: profile.id,
+        profileData: profile
+      });
+      return undefined;
+    }
+
+    console.log('✅ User fetched successfully:', {
+      userId: profile.id,
+      username: profile.username
+    });
+
     return convertProfileToUser(profile);
   } catch (error) {
-    console.error('Error getting user by ID:', error);
+    console.error('❌ Unexpected error getting user by ID:', {
+      userId,
+      error
+    });
     return undefined;
   }
 }

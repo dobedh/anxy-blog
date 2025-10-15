@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { Post as SupabasePost } from '@/lib/supabase';
 import { Post, CreatePostData, UpdatePostData, PostFilters, PostSortOption } from '@/types/post';
 import { getUserById } from './supabaseUserUtils';
+import { createNotification } from './supabaseNotificationUtils';
 
 // Supabase Post를 Post 타입으로 변환
 export function convertSupabasePostToPost(supabasePost: any): Post {
@@ -407,6 +408,69 @@ export async function togglePostLike(postId: string, userId: string): Promise<{ 
       if (error) {
         console.error('Error adding like:', error);
         return { success: false, liked: false, error: '좋아요 추가에 실패했습니다.' };
+      }
+
+      // 좋아요 성공 시 알림 생성 (자신의 글이 아닐 경우에만)
+      try {
+        // 글 정보 조회
+        const post = await getPostById(postId);
+        if (!post) {
+          console.error('❌ NOTIFICATION FAILED: Could not fetch post data', {
+            postId,
+            userId
+          });
+          return { success: true, liked: true }; // Like succeeded even if notification failed
+        }
+
+        if (!post.authorId) {
+          console.log('⚠️ NOTIFICATION SKIPPED: Post has no author (anonymous post)', {
+            postId
+          });
+          return { success: true, liked: true };
+        }
+
+        if (post.authorId === userId) {
+          console.log('⚠️ NOTIFICATION SKIPPED: User liked their own post', {
+            postId,
+            userId
+          });
+          return { success: true, liked: true };
+        }
+
+        // 좋아요한 사용자 정보 조회
+        const likerUser = await getUserById(userId);
+        if (!likerUser) {
+          console.error('❌ NOTIFICATION FAILED: Could not fetch liker user data', {
+            userId,
+            postId
+          });
+          return { success: true, liked: true }; // Like succeeded even if notification failed
+        }
+
+        const notifResult = await createNotification({
+          userId: post.authorId,
+          actorId: userId,
+          actorName: likerUser.username,
+          actorAvatarUrl: likerUser.avatar || null,
+          type: 'POST_LIKE',
+          title: `${likerUser.username}님이 회원님의 글을 좋아합니다`,
+          message: post.title,
+          postId: postId,
+          commentId: null
+        });
+
+        if (!notifResult.success) {
+          console.error('❌ NOTIFICATION CREATION FAILED:', {
+            error: notifResult.error,
+            postId,
+            userId,
+            actorName: likerUser.username
+          });
+        } else {
+          console.log('✅ Like notification created successfully');
+        }
+      } catch (notifError) {
+        console.error('❌ UNEXPECTED ERROR in notification creation:', notifError);
       }
 
       return { success: true, liked: true };
