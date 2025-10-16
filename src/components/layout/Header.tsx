@@ -398,7 +398,15 @@ export default function Header() {
                 <NotificationButton
                   unreadCount={unreadCount}
                   isOpen={isNotificationOpen}
-                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                  onClick={() => {
+                    const willBeOpen = !isNotificationOpen;
+                    setIsNotificationOpen(willBeOpen);
+
+                    // 드롭다운이 열릴 때 모든 알림을 읽음 처리
+                    if (willBeOpen && unreadCount > 0) {
+                      markAllAsRead();
+                    }
+                  }}
                 />
 
                 {/* Notification Dropdown */}
