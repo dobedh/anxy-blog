@@ -10,6 +10,7 @@ import { getFollowerCount, getFollowingCount } from '@/utils/supabaseFollowUtils
 import PostCard from '@/components/PostCard';
 import FollowButton from '@/components/FollowButton';
 import FollowersModal from '@/components/FollowersModal';
+import ActivityCalendar from '@/components/ActivityCalendar';
 
 interface UserPageProps {
   params: { username: string };
@@ -149,6 +150,11 @@ export default function UserPage({ params }: UserPageProps) {
             <div>팔로잉</div>
           </button>
         </div>
+      </div>
+
+      {/* Activity Calendar */}
+      <div className="mb-16">
+        <ActivityCalendar posts={posts} />
       </div>
 
       {/* Posts Section */}
