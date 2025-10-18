@@ -104,15 +104,22 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
                       const dateKey = day.date.toISOString().split('T')[0];
                       const postCount = heatmapData.postCountByDate.get(dateKey) || 0;
 
+                      // 글 개수에 따른 색상 결정
+                      let bgColor = 'bg-accent'; // 기본: 활동 없음
+                      if (postCount === 1) {
+                        bgColor = 'bg-green-300'; // 1개: 연한 녹색
+                      } else if (postCount === 2) {
+                        bgColor = 'bg-green-500'; // 2개: 중간 녹색
+                      } else if (postCount >= 3) {
+                        bgColor = 'bg-green-800'; // 3개 이상: 매우 진한 녹색
+                      }
+
                       return (
                         <div
                           key={dayIndex}
                           className={`
                             w-[14px] h-[14px] rounded-[2px] cursor-default
-                            ${day.hasPost
-                              ? 'bg-green-400'
-                              : 'bg-accent'
-                            }
+                            ${bgColor}
                           `}
                           onMouseEnter={(e) => {
                             const rect = e.currentTarget.getBoundingClientRect();
