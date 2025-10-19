@@ -98,7 +98,7 @@ export default function Header() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 header-transition bg-white ${isScrolled ? 'header-transparent header-scrolled' : ''}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 header-transition header-transparent ${isScrolled ? 'header-scrolled' : ''}`}>
       <div className="h-16 flex items-center justify-between px-4 lg:px-6">
         {/* Left Side - Hamburger, Logo, and Search */}
         <div className="flex items-center flex-1 min-w-0">
