@@ -1,7 +1,7 @@
 'use client';
 
 import { Post } from '@/types/post';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 interface ActivityCalendarProps {
   posts: Post[];
@@ -15,24 +15,49 @@ interface DayData {
 
 export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
   const [hoveredDay, setHoveredDay] = useState<{ date: Date; count: number; x: number; y: number } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // GitHub 스타일 히트맵 데이터 생성 (최근 3개월)
+  // 화면 크기 감지 (1024px = lg breakpoint)
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+
+    checkMobile(); // 초기 체크
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // GitHub 스타일 히트맵 데이터 생성 (반응형: PC = 1년, 모바일 = 3개월)
   const heatmapData = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 오늘 (시간 제거)
 
-    // 3개월 전 계산 (90일)
-    const threeMonthsAgo = new Date(today);
-    threeMonthsAgo.setDate(today.getDate() - 90);
+    // 날짜 범위 설정 (반응형)
+    let rangeStart: Date;
+    let rangeEnd: Date;
+
+    if (isMobile) {
+      // 모바일: 최근 3개월 (90일)
+      const threeMonthsAgo = new Date(today);
+      threeMonthsAgo.setDate(today.getDate() - 90);
+      rangeStart = threeMonthsAgo;
+      rangeEnd = today;
+    } else {
+      // PC: 올해 전체
+      rangeStart = new Date(now.getFullYear(), 0, 1); // 1월 1일
+      rangeEnd = new Date(now.getFullYear(), 11, 31); // 12월 31일
+    }
 
     // 일요일부터 시작하도록 조정
-    const startDate = new Date(threeMonthsAgo);
+    const startDate = new Date(rangeStart);
     while (startDate.getDay() !== 0) {
       startDate.setDate(startDate.getDate() - 1);
     }
 
     // 토요일로 끝나도록 조정
-    const endDate = new Date(today);
+    const endDate = new Date(rangeEnd);
     while (endDate.getDay() !== 6) {
       endDate.setDate(endDate.getDate() + 1);
     }
@@ -59,7 +84,7 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
       const weekData: DayData[] = [];
       for (let day = 0; day < 7; day++) {
         const dateKey = currentDate.toISOString().split('T')[0];
-        const isInRange = currentDate >= threeMonthsAgo && currentDate <= today;
+        const isInRange = currentDate >= rangeStart && currentDate <= rangeEnd;
 
         weekData.push({
           date: new Date(currentDate),
@@ -73,7 +98,7 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
     }
 
     return { grid, postCountByDate };
-  }, [posts]);
+  }, [posts, isMobile]);
 
   const weekdayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
