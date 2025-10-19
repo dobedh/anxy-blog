@@ -39,10 +39,10 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
     let rangeEnd: Date;
 
     if (isMobile) {
-      // 모바일: 최근 3개월 (90일)
-      const threeMonthsAgo = new Date(today);
-      threeMonthsAgo.setDate(today.getDate() - 90);
-      rangeStart = threeMonthsAgo;
+      // 모바일: 최근 5개월 (150일) - 작은 화면에 맞춰 조정
+      const fiveMonthsAgo = new Date(today);
+      fiveMonthsAgo.setDate(today.getDate() - 150);
+      rangeStart = fiveMonthsAgo;
       rangeEnd = today;
     } else {
       // PC: 올해 전체
@@ -124,7 +124,7 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
                   const monthLabel = isFirstWeekOfMonth ? months[firstDay.getMonth()] : '';
 
                   return (
-                    <div key={weekIndex} className="text-[10px] text-muted w-[14px]">
+                    <div key={weekIndex} className="text-[10px] text-muted w-[15px] lg:w-[14px]">
                       {monthLabel}
                     </div>
                   );
@@ -153,7 +153,7 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
                         <div
                           key={dayIndex}
                           className={`
-                            w-[14px] h-[14px] rounded-[2px] cursor-default
+                            w-[15px] h-[15px] lg:w-[14px] lg:h-[14px] rounded-[2px] cursor-default
                             ${bgColor}
                           `}
                           onMouseEnter={(e) => {
