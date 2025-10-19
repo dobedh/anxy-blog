@@ -16,16 +16,25 @@ interface DayData {
 export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
   const [hoveredDay, setHoveredDay] = useState<{ date: Date; count: number; x: number; y: number } | null>(null);
 
-  // GitHub 스타일 히트맵 데이터 생성 (올해 1월 1일 ~ 12월 31일)
+  // GitHub 스타일 히트맵 데이터 생성 (최근 3개월)
   const heatmapData = useMemo(() => {
     const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1); // 올해 1월 1일
-    const endOfYear = new Date(now.getFullYear(), 11, 31); // 올해 12월 31일
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 오늘 (시간 제거)
+
+    // 3개월 전 계산 (90일)
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setDate(today.getDate() - 90);
 
     // 일요일부터 시작하도록 조정
-    const startDate = new Date(startOfYear);
+    const startDate = new Date(threeMonthsAgo);
     while (startDate.getDay() !== 0) {
       startDate.setDate(startDate.getDate() - 1);
+    }
+
+    // 토요일로 끝나도록 조정
+    const endDate = new Date(today);
+    while (endDate.getDay() !== 6) {
+      endDate.setDate(endDate.getDate() + 1);
     }
 
     // 날짜별 글 개수 계산
@@ -38,18 +47,19 @@ export default function ActivityCalendar({ posts }: ActivityCalendarProps) {
       }
     });
 
-    // 53주 × 7일 그리드 생성
+    // 주 수 동적 계산
+    const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const totalWeeks = Math.ceil(totalDays / 7);
+
+    // 그리드 생성
     const grid: DayData[][] = [];
     const currentDate = new Date(startDate);
-
-    // 올해 전체를 커버하는 주 수 계산
-    const totalWeeks = 53;
 
     for (let week = 0; week < totalWeeks; week++) {
       const weekData: DayData[] = [];
       for (let day = 0; day < 7; day++) {
         const dateKey = currentDate.toISOString().split('T')[0];
-        const isInRange = currentDate >= startOfYear && currentDate <= endOfYear;
+        const isInRange = currentDate >= threeMonthsAgo && currentDate <= today;
 
         weekData.push({
           date: new Date(currentDate),
